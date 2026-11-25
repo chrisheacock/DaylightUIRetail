@@ -44,7 +44,15 @@ T.test("each frame page's sample is its own frame, fitted to the room given", fu
 end)
 
 T.test("the pet sample shows happiness while it's on, and design mode can move it", function()
-    local DUI, ns = load()
+    -- Happiness only exists when the classic API is present (stub has none by
+    -- default, same as Retail).
+    local DUI, ns = stub.Load({ module = true, before = function()
+        _G.C_PetInfo = {
+            GetPetHappiness = function() return 2, 125, 1 end,
+            GetPetFoodTypes = function() return { "Meat" } end,
+        }
+        _G.HasPetUI = function() return true, true end
+    end })
     local s = sample(ns, "pet")
     local found
     for _, p in ipairs(s.Parts()) do
