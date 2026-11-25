@@ -194,10 +194,10 @@ function DUI.UnitName(unit, element)
     if not full or type(last) ~= "string" then return first end
     if issecretvalue and (issecretvalue(first) or issecretvalue(last)) then return first end
     if type(first) ~= "string" or last == "" then return first end
-    -- On Retail the second value is the realm. Joining it would print
-    -- "Name Stormrage" on a cross-realm unit. Surnames are Forever's.
-    if DUI.Client and DUI.Client.Retail and DUI.Client.Retail() then return first end
-    return first .. " " .. last
+    -- UnitFullName's second return is the realm on Retail. Joining it would
+    -- print "Name Stormrage" on a cross-realm unit. Roleplay last names come
+    -- from Total RP 3 above, not from this value.
+    return first
 end
 
 -- How hard a unit is for you, as { r, g, b }, the way the game's own target

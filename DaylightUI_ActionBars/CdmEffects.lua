@@ -26,8 +26,8 @@ ns.CdmEffects = Fx
 -- inactiveFlash: the empty bar ("Show missing buffs") pulses while the buff is down.
 -- missing: "Show when missing", the spell keeps its spot (grayed icon, empty bar)
 -- while its buff is down. missingGlow (missingGlowColor) makes it glow then.
--- upGlow (upGlowColor): glows while its buff is up. WoW Forever fires no proc
--- alerts, so for something like Clearcasting the buff landing is the proc.
+-- upGlow (upGlowColor): glows while its buff is up. For something like
+-- Clearcasting the buff landing can stand beside a real spell-alert proc.
 -- clipGlow (clipGlowColor): glows while it's up and the next cast of it would land
 -- just as it runs out (CdmAuras.ClipDue), the moment to cast it again.
 -- hideActive: hidden while its buff is up (by alpha, so the gap stays).
@@ -519,7 +519,6 @@ local function wantsGlow(item)
     local buff = buffGlow(b, down[item], due[item])
     if buff then return buff end
     -- Usable: Revenge after a block, Overpower after a dodge, Execute under 20%.
-    -- WoW Forever fires no spell alerts, so this stands in for the proc.
     if Fx.Get(b, "usableGlow") == true and usable[item] == true and cdState[item] ~= true then
         return "usableGlowColor"
     end

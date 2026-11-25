@@ -27,7 +27,7 @@ DB.GENERAL_DEFAULTS = {
     windowBar = "general", -- bars in Daylight UI's windows (W.Bar); "general" = barTexture
     windowBack = "general", -- their empty part; "general" = barBack
     accent = "classGradient",
-    lastNames = { -- first and last names, one switch per element
+    lastNames = { -- Total RP 3: show the roleplay last name with the first (one switch per element)
         player = true, target = true, targettarget = true, focus = true, focustarget = true, pet = true, partyTarget = true,
         party = true, raid = true, nameplates = true, tooltip = true, character = true, inspect = true,
         threat = false, -- the threat meter's rows are narrow
@@ -169,9 +169,9 @@ local function copy(v)
 end
 DB.Copy = copy
 
--- This character's last name (UnitFullName's second value on this client),
--- or nil before it's available (early in loading) or if there is none.
-local function lastName()
+-- UnitFullName's first and second returns when both are plain strings.
+-- On Retail the second value is the realm (never a surname to join into a key).
+local function fullName()
     if type(UnitFullName) ~= "function" then return nil end
     local first, last = UnitFullName("player")
     if DUI.IsSecret(first) or DUI.IsSecret(last) then return nil end
@@ -235,33 +235,30 @@ local function realmOf(first)
     local realm = GetRealmName()
     if type(realm) ~= "string" then return "" end
     if realm ~= "" then return realm end
-    local f, last = lastName()
-    return (f and savedRealm(f .. " " .. last)) or savedRealm(first) or ""
+    -- Some sessions GetRealmName stays empty. UnitFullName's second return is
+    -- the realm on Retail, so use that, then a realm this name was saved under.
+    local _, fromFull = fullName()
+    if type(fromFull) == "string" and fromFull ~= "" then return fromFull end
+    return savedRealm(first) or ""
 end
 
--- This character's first name and realm as "First-Realm", the key every
--- character used before last names were added (DaylightMogul still uses it).
--- Nil while the game doesn't know the name yet (it says "Unknown" early in
--- loading).
+-- This character as "First-Realm". Nil while the game doesn't know the name
+-- yet (it says "Unknown" early in loading). On Retail, UnitFullName's second
+-- value is already the realm, so it is never joined into the name half.
 function DB.ShortKey()
     local name = UnitName and UnitName("player")
     if type(name) ~= "string" or name == "" or name == (UNKNOWNOBJECT or "Unknown") then return nil end
     return name .. "-" .. realmOf(name)
 end
 
--- This character as "First Last-Realm". Two characters can share a first
--- name, and when they shared one entry each saw the other's bags. A
--- character with no last name keeps "First-Realm". Once known it's fixed for
--- the session, so a moment where the last name can't be read never moves the
--- character to another entry.
+-- Same as ShortKey on Retail. Kept as its own call so older code and the
+-- migrate path still have one place to ask for "this character's entry".
 function DB.CharKey()
     local short = DB.ShortKey()
     if not short then return nil end
     if DB.fullKey and DB.fullKeyOf == short then return DB.fullKey end
-    local first, last = lastName()
-    if not first then return short end
     DB.fullKeyOf = short
-    DB.fullKey = first .. " " .. last .. short:sub(#first + 1)
+    DB.fullKey = short
     if DB.loggedIn then DB.AdoptOldKeys() end
     return DB.fullKey
 end
@@ -315,37 +312,27 @@ function DB.AdoptOldKeys()
         end
         c.guid = guid
     end
-    local first, last = lastName()
-    if not first then return end
-    local old = first .. "-" .. last
-    if old ~= key and old ~= short and type(chars[old]) == "table" then
-        for k, v in pairs(chars[old]) do
-            if c[k] == nil then c[k] = v end
+    -- Fold an old Forever-shaped "First Last-Realm" entry into "First-Realm"
+    -- when someone imports saved variables that still use a surname in the key.
+    local first = UnitName and UnitName("player")
+    local realm = type(first) == "string" and realmOf(first) or ""
+    if type(first) == "string" and first ~= "" and realm ~= "" then
+        local suffix = "-" .. realm
+        local prefix = first .. " "
+        for k, other in pairs(chars) do
+            if k ~= key and type(other) == "table" and type(k) == "string"
+                and k:sub(-#suffix) == suffix and k:sub(1, #prefix) == prefix then
+                for f, v in pairs(other) do
+                    if c[f] == nil then c[f] = v end
+                end
+                chars[k] = nil
+            end
         end
-        chars[old] = nil
-    end
-    local s = chars[short]
-    if key == short or c.fromShort or type(s) ~= "table" then return end
-    c.fromShort = true
-    local inv = type(s.inventory) == "table" and s.inventory or nil
-    local theirClass = s.class or (inv and inv.class)
-    local _, myClass = UnitClass and UnitClass("player")
-    local mine
-    if type(s.mailName) == "string" then
-        mine = s.mailName == first .. " " .. last
-    else
-        mine = theirClass == nil or theirClass == myClass
-    end
-    for k, v in pairs(s) do
-        if c[k] == nil and (mine or not DB.OWN_KEYS[k]) then c[k] = copy(v) end
-    end
-    if mine then
-        for k in pairs(DB.OWN_KEYS) do s[k] = nil end
     end
 end
 
 -- A character's entry: { install, profile, specProfiles = { [1], [2] }, padProfile, lastSpec }.
--- This character's "First-Realm" key (DaylightMogul's) finds its own entry.
+-- This character's "First-Realm" key finds its own entry.
 function DB.Character(key)
     local root = DB.Root()
     if type(root.characters) ~= "table" then root.characters = {} end

@@ -3269,10 +3269,9 @@ T.test("cdm card: the Look tab's Whole group colors every bar's background; a sp
     T.eq(#stub.errors, 0, tostring(stub.errors[1]))
 end)
 
--- Slice and Dice (Buff only) with Glow when usable and Glow on proc never glowed.
--- Buff only has nothing to be usable off, and WoW Forever fires no proc alerts,
--- so those rows can't do anything.
-T.test("cdm card: Usable rows only for a cooldown, and no proc glow row (Forever has no procs)", function()
+-- Slice and Dice (Buff only) with Glow when usable: Buff only has nothing to be
+-- usable off. Proc glow rows are offered for cooldowns that can proc.
+T.test("cdm card: Usable rows only for a cooldown; proc glow rows for cooldowns", function()
     local DUI, AB, Ed, D = edWorld()
     withCategories({ [0] = { 11 }, [2] = { 12 } }, { [0] = { 11 }, [2] = { 12 } })
     _G.C_CooldownViewer.GetCooldownViewerCooldownInfo = function(id)
@@ -3285,8 +3284,12 @@ T.test("cdm card: Usable rows only for a cooldown, and no proc glow row (Forever
     local function row(key)
         for _, r in ipairs(AB.CdmCard.ROWS.show) do if r.item and r.item.key == key then return r end end
     end
-    T.isnil(row("cdm.card.glow"), "no proc glow row")
-    T.isnil(row("cdm.card.glowColor"), "no proc glow color row")
+    T.truthy(row("cdm.card.glow"), "Glow on proc")
+    T.truthy(row("cdm.card.glowColor"), "Proc glow color")
+    Ed.Select(11)
+    T.truthy(row("cdm.card.glow").show(set, 11, set.pieces[11]), "a cooldown can glow on proc")
+    Ed.Select(12)
+    T.falsy(row("cdm.card.glow").show(set, 12, set.pieces[12]), "Buff only has nothing to proc off")
     set.pieces[12].usableGlow = true
     for _, key in ipairs({ "cdm.card.usableGlow", "cdm.card.usableGlowColor", "cdm.card.usableSound" }) do
         local r = row(key)

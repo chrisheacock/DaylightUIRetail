@@ -187,10 +187,16 @@ function Happiness.Prepare(f, cfg)
     return { side = side, along = along, w = w, gap = gap, cut = cut }
 end
 
+-- Retail Midnight has no pet happiness. These options and frames only appear
+-- when the client still exposes the API.
+function Happiness.Supported()
+    return type(C_PetInfo) == "table" and type(C_PetInfo.GetPetHappiness) == "function"
+end
+
 -- Returns the mood (1 to 3), the damage percent and the loyalty rate, or nil
 -- when there's no hunter pet.
 function Happiness.Read()
-    if not (C_PetInfo and C_PetInfo.GetPetHappiness) then return nil end
+    if not Happiness.Supported() then return nil end
     local _, isHunterPet = HasPetUI()
     if not isHunterPet then return nil end
     if not (C_PetInfo and C_PetInfo.GetPetHappiness) then return nil end

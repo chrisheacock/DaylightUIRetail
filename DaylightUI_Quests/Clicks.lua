@@ -38,16 +38,11 @@ Clicks.MENU_TEXT = { map = L["Show on map"], details = L["Quest details"], share
                      untrack = L["Stop tracking"], abandon = L["Abandon"],
                      priority = L["Make it your priority"], fold = L["Fold this quest"],
                      turnin = L["Show hand-in on map"], link = L["Link in chat"], wowhead = L["Wowhead link"] }
--- Questie's Forever menu uses the /forever/ path. Retail Wowhead has no such prefix.
-Clicks.WOWHEAD_FOREVER = "https://www.wowhead.com/forever/quest="
-Clicks.WOWHEAD_RETAIL = "https://www.wowhead.com/quest="
+Clicks.WOWHEAD = "https://www.wowhead.com/quest="
 
 function Clicks.WowheadBase()
-    if DUI.Client and DUI.Client.Retail and DUI.Client.Retail() then return Clicks.WOWHEAD_RETAIL end
-    return Clicks.WOWHEAD_FOREVER
+    return Clicks.WOWHEAD
 end
--- Kept for callers that still read the Forever path.
-Clicks.WOWHEAD = Clicks.WOWHEAD_FOREVER
 
 local function refuse(text)
     DUI.ShowError(text)

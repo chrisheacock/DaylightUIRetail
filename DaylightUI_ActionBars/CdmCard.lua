@@ -677,8 +677,7 @@ Card.ROWS = {
         { show = both(isIcon, isCooldown), item = spell("desat", { type = "dropdown", label = "Gray out",
             values = { game = "Default", grey = "Gray", color = "Stay colored" }, order = { "game", "grey", "color" } }) },
         -- Usable applies to cooldowns only; Buff only has nothing to be usable.
-        -- Proc glow rows are added below on Retail, where the game fires spell
-        -- alerts. Forever does not, so those rows are not offered there.
+        -- Proc glow rows are added below: the game's spell alerts light the ring.
         { head = L["Usable"], show = isCooldown },
         { show = isCooldown, item = spell("onUnusable", { type = "dropdown", label = "Not usable",
             values = { show = "Show", fade = "Fade", hide = "Hide" }, order = { "show", "fade", "hide" },
@@ -774,9 +773,8 @@ Card.ROWS = {
     },
 }
 
--- Retail's spell alerts light the ring (CdmEffects, glow). Forever never fires
--- them, so the rows stay off that client: a Glow switch there did nothing.
-if DUI.Client and DUI.Client.Retail and DUI.Client.Retail() then
+-- Spell alerts (SPELL_ACTIVATION_OVERLAY_*) light the ring (CdmEffects, glow).
+do
     local rows, at = Card.ROWS.show, #Card.ROWS.show + 1
     for i, r in ipairs(rows) do
         if r.head == L["Usable"] then at = i break end

@@ -361,8 +361,7 @@ local look = {
           desc = "Their color when Active border and glow color is One color.",
           hidden = custom("look.checkedBorderMode") },
     } }),
-    -- Retail fires spell-alert procs (Hot Streak, Sudden Death). Forever does
-    -- not, and the border still follows a proc if one ever arrives.
+    -- Spell-alert procs (Hot Streak, Sudden Death, …) light the button border.
     perLook({ label = "Proc", items = {
         { type = "dropdown", key = "look.proc", label = "Proc border",
           values = { accent = "Accent color", custom = "One color" }, order = { "accent", "custom" },

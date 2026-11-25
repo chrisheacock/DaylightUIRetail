@@ -8,11 +8,11 @@
 #
 #     powershell -ExecutionPolicy Bypass -File tools\link_dev.ps1
 #
-# The game folder: -Game, else $env:WOW_RETAIL, else $env:WOW_FOREVER, else Retail's usual install.
+# The game folder: -Game, else $env:WOW_RETAIL, else Retail's usual install.
 # Safe to run again: a right junction is left alone, a stale one is remade.
 # The junctions are outside the repo, so git never sees them.
 
-param([string]$Game = $(if ($env:WOW_RETAIL) { $env:WOW_RETAIL } elseif ($env:WOW_FOREVER) { $env:WOW_FOREVER } else { "C:\Program Files (x86)\World of Warcraft\_retail_" }))
+param([string]$Game = $(if ($env:WOW_RETAIL) { $env:WOW_RETAIL } else { "C:\Program Files (x86)\World of Warcraft\_retail_" }))
 
 $ErrorActionPreference = "Stop"
 $repo = Split-Path -Parent $PSScriptRoot

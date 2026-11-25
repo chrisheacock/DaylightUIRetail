@@ -142,17 +142,15 @@ T.test("/rl and /reloadui reload the UI", function()
     T.truthy(stub.reloaded)
 end)
 
-T.test("first and last names: only with the setting on, never joining a secret", function()
+T.test("first and last names: UnitFullName's second value is a realm, never joined", function()
     local DUI = stub.Load()
     stub.units.party1 = { name = "Bone", lastName = "Money", isPlayer = true }
-    T.eq(DUI.UnitName("party1"), "Bone Money", "on by default")
+    T.eq(DUI.UnitName("party1"), "Bone", "a realm is not a surname")
     DUI:Set("general", "lastNames.party", false)
-    T.eq(DUI.UnitName("party1"), "Bone", "off for party only")
-    T.eq(DUI.UnitName("party1", "nameplates"), "Bone Money", "nameplates keep their own switch")
+    T.eq(DUI.UnitName("party1"), "Bone", "the switch only affects Total RP 3")
     DUI:Set("general", "lastNames.party", true)
-    T.eq(DUI.UnitName("party1"), "Bone Money")
     stub.units.party1.lastName = nil
-    T.eq(DUI.UnitName("party1"), "Bone", "no last name: just the first")
+    T.eq(DUI.UnitName("party1"), "Bone", "no second name: just the first")
 end)
 
 -- A fake Total RP 3 with its real public calls (totalRP3 3.5.4, Core/Player.lua):
@@ -188,20 +186,20 @@ T.test("Total RP 3 names: a roleplay profile's name, first or full by the elemen
     local profiles, callbacks = {}, {}
     local DUI = stub.Load({ before = function() fakeTRP3(profiles, callbacks) end })
     stub.units.party1 = { name = "Bone", lastName = "Money", isPlayer = true }
-    T.eq(DUI.UnitName("party1"), "Bone Money", "unknown to Total RP 3: the game's name")
+    T.eq(DUI.UnitName("party1"), "Bone", "unknown to Total RP 3: the game's first name")
     profiles["Bone-Money"] = { profileID = "abc", FN = "Aldric", LN = "Thorne" }
     T.eq(DUI.UnitName("party1"), "Aldric Thorne", "a roleplay name, first and last")
     DUI:Set("general", "lastNames.party", false)
     T.eq(DUI.UnitName("party1"), "Aldric", "last names off: the roleplay first name")
     DUI:Set("general", "lastNames.party", true)
     profiles["Bone-Money"].profileID = "def*"
-    T.eq(DUI.UnitName("party1"), "Bone Money", "the default profile isn't a roleplay name")
+    T.eq(DUI.UnitName("party1"), "Bone", "the default profile isn't a roleplay name")
     profiles["Bone-Money"].profileID = "abc"
     DUI:Set("general", "rpNames", false)
-    T.eq(DUI.UnitName("party1"), "Bone Money", "switched off: the game's name")
+    T.eq(DUI.UnitName("party1"), "Bone", "switched off: the game's name")
     DUI:Set("general", "rpNames", true)
     stub.units.npc1 = { name = "Bone", lastName = "Money", isPlayer = false }
-    T.eq(DUI.UnitName("npc1", "party"), "Bone Money", "only players")
+    T.eq(DUI.UnitName("npc1", "party"), "Bone", "only players")
     stub.units.party1.name = stub.Secret("Bone")
     T.eq(stub.Plain(DUI.UnitName("party1")), "Bone", "a secret name never reaches Total RP 3")
     stub.units.party1.name = "Bone"

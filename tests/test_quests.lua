@@ -2878,7 +2878,7 @@ T.test("menu: wowhead", function()
     W.Prompt = function(_, initial) got = initial end
     ns.Clicks.Do("wowhead", q)
     W.Prompt = was
-    T.eq(got, "https://www.wowhead.com/forever/quest=7")
+    T.eq(got, "https://www.wowhead.com/quest=7")
 end)
 
 -- ---------------------------------------------------------------------

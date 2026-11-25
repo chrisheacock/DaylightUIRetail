@@ -60,7 +60,7 @@ T.test("inspect: ours opens in the game's place, its title their name in their c
     local p, rel, _, x, y = f:GetPoint(1)
     T.eq(p, "TOPLEFT"); T.eq(rel, UIParent); T.eq(x, 16 / f:GetScale()); T.eq(y, -116 / f:GetScale())
     T.truthy(InspectFrame:IsShown(), "the game's frame still counts as shown")
-    T.eq(f.title:GetText(), "Garrick Stone")
+    T.eq(f.title:GetText(), "Garrick")
     T.rgb({ f.title:GetTextColor() }, { DaylightUI.Style.ClassTextColor("WARRIOR") })
     T.truthy((f.sub:GetText() or ""):find("60"), "the sub line has their level")
 end)
@@ -506,7 +506,7 @@ T.test("inspect: the game's window's link switches back to Daylight UI's, no rel
     T.eq(DaylightUI:Get("Inspect", "enabled"), true, "the pick is saved")
     local f = ns.Window.frame
     T.truthy(f and DaylightUI.Win.IsOpen(f), "ours takes over the open inspect")
-    T.eq(f.title:GetText(), "Garrick Stone")
+    T.eq(f.title:GetText(), "Garrick")
     T.eq(InspectFrame:GetParent(), DaylightUI.Win.Followers.aside, "the game's frame is held aside")
     T.falsy(b:IsShown(), "the link is gone with the game's look")
     T.truthy(ns.Window.Covers())

@@ -2609,16 +2609,16 @@ T.test("character header: your title with your name, before or after it as the g
     T.eq(ns.window.nameText:GetText(), me, "no title: the name alone")
 end)
 
-T.test("character header: your first and last name, on its own switch", function()
+T.test("character header: the first name only; a realm is never joined", function()
     local DUI, ns = load()
     stub.units.player = stub.units.player or { name = UnitName("player") }
     stub.units.player.lastName = "Dadoopy"
     DUI:Set("general", "lastNames.player", false)   -- the player frame's switch isn't this one
     ns.Window.PaintHeader()
-    T.eq(ns.window.nameText:GetText(), UnitName("player") .. " Dadoopy", "on by default")
+    T.eq(ns.window.nameText:GetText(), UnitName("player"), "on by default: first name only")
     DUI:Set("general", "lastNames.character", false)
     ns.Window.PaintHeader()
-    T.eq(ns.window.nameText:GetText(), UnitName("player"), "off: the first name")
+    T.eq(ns.window.nameText:GetText(), UnitName("player"), "the switch only affects Total RP 3")
     local found
     for _, g in ipairs(ns.OPTIONS.pages[1].groups) do
         for _, it in ipairs(g.items) do if it.key == "lastNames.character" then found = it end end

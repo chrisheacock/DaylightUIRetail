@@ -738,15 +738,14 @@ T.test("upgrade 9: the party's old aura keys move into party.auras, each old spo
     T.isnil(u.party.auras, "no aura keys saved: the defaults stand")
 end)
 
-T.test("the samples of you carry your last name, by each frame's own switch", function()
+T.test("the samples of you use the first name; a realm is never joined", function()
     local DUI, ns = login(function()
         stub.units.player = { name = "Kaladin", lastName = "Stormblessed", isPlayer = true, class = "WARRIOR" }
     end)
-    T.eq(ns.Party.You().name, "Kaladin Stormblessed", "party sample")
-    T.eq(ns.Sample.You().name, "Kaladin Stormblessed", "player frame sample")
+    T.eq(ns.Party.You().name, "Kaladin", "party sample")
+    T.eq(ns.Sample.You().name, "Kaladin", "player frame sample")
     DUI:Set("general", "lastNames.party", false)
-    T.eq(ns.Party.You().name, "Kaladin", "the party switch off")
-    T.eq(ns.Sample.You().name, "Kaladin Stormblessed", "the player's own switch still on")
+    T.eq(ns.Party.You().name, "Kaladin", "the switch only affects Total RP 3")
 end)
 
 T.test("a faction update for a nameplate starts no status pass; one for a member does", function()

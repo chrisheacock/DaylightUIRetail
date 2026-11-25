@@ -83,23 +83,23 @@ T.test("texts: a name text follows the last-name switch; class shows for players
     stub.units.target = { name = "Bone", lastName = "Money", isPlayer = true, class = "MAGE", health = 5, maxHealth = 10 }
     local f = ns.frames.target
     ns.UF.UpdateAll(f, true)
-    T.eq(stub.Text(f.extraTexts[1]), "Bone Money")
+    T.eq(stub.Text(f.extraTexts[1]), "Bone", "a realm is never joined into the name")
     T.truthy(stub.Text(f.extraTexts[2]) ~= "", "a player's class")
     stub.units.target = { name = "Wolf", reaction = 2, class = "WARRIOR", health = 5, maxHealth = 10 }
     ns.UF.UpdateAll(f, true)
     T.eq(stub.Text(f.extraTexts[2]), "", "a mob's class says nothing")
 end)
 
-T.test("target name: with the last-name switch off, a new target shows only the first name", function()
+T.test("target name: a new target shows only the first name, never the realm", function()
     local DUI, ns = login()
     stub.RunTimers()
     stub.units.target = { name = "Bone", lastName = "Money", isPlayer = true, class = "MAGE", health = 5, maxHealth = 10 }
     stub.FireEvent("PLAYER_TARGET_CHANGED"); stub.RunTimers()
     local f = ns.frames.target
-    T.eq(stub.Text(f.nameText), "Bone Money", "on by default")
+    T.eq(stub.Text(f.nameText), "Bone", "first name only")
     DUI:Set("general", "lastNames.target", false)
     stub.RunTimers()
-    T.eq(stub.Text(f.nameText), "Bone", "the current target at once")
+    T.eq(stub.Text(f.nameText), "Bone", "the switch does not join a realm")
     stub.units.target = { name = "Ayla", lastName = "Moonwhisper", isPlayer = true, class = "DRUID", health = 5, maxHealth = 10 }
     stub.FireEvent("PLAYER_TARGET_CHANGED"); stub.RunTimers()
     T.eq(stub.Text(f.nameText), "Ayla", "and the next target")

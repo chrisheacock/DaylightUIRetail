@@ -1857,7 +1857,8 @@ _G.UnitName = function(u)
     if u == "player" then return stub.playerName end
 end
 stub.playerName = "Tester"
--- In this client the second value is a last name (units[u].lastName), not a realm.
+-- On Retail the second value is the realm. Tests store it as units[u].lastName;
+-- DUI.UnitName never joins it (a Total RP 3 profile can still supply a surname).
 _G.UnitFullName = function(u)
     local x = U(u)
     if x then return x.name, x.lastName end
@@ -3697,7 +3698,7 @@ stub.feelOwner = nil
 
 function stub.Reset()
     unhookAll()
-    -- Client.lua reads these live. A retail test sets them in before(), after Reset.
+    -- Daylight UI is Retail-only. Clear any project overrides a prior test left.
     _G.WOW_PROJECT_ID, _G.WOW_PROJECT_MAINLINE, _G.WOW_PROJECT_CAMELOT = nil, nil, nil
     _G.GetBuildInfo = nil
     -- What a test world put in place beyond the fake game (tests/cdmworld.lua) goes with it.
