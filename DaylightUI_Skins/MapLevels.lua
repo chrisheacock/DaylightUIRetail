@@ -1,12 +1,11 @@
 -- The level range of the zone under the mouse on the world map, after its name
--- ("Wetlands (20-30)"), colored by how hard it is for you. The game does the same
--- with C_Map.GetMapLevels, but that returns nothing on Forever, so the ranges are
--- kept here: classic zones by their usual ranges, Forever's own zones by the
--- levels of their quests.
+-- ("Wetlands (20-30)"), colored by how hard it is for you. On Retail,
+-- C_Map.GetMapLevels supplies the range for the map under the cursor. A small
+-- classic-zone table stands in when that API is missing or returns nothing.
 --
 -- The game writes the hovered zone's name into its area label only when it
--- changes. A script hook on the label reads that name back, and when it is a zone
--- below, writes the name again with the range added, colored the way the game's
+-- changes. A script hook on the label reads that name back, and when a range is
+-- known, writes the name again with the range added, colored the way the game's
 -- own label colors it. Nothing else of the map is touched.
 
 local _, ns = ...
@@ -59,10 +58,6 @@ Levels.ZONES = {
     [1452] = { 53, 60 },  -- Winterspring
     [1450] = { 55, 60 },  -- Moonglade
     [1451] = { 55, 60 },  -- Silithus
-    -- Added by Forever
-    [2521] = { 1, 13 },   -- Zephras Isle
-    [2548] = { 36, 45 },  -- Riverglades
-    [2482] = { 56, 60 },  -- Mount Hyjal
 }
 
 local cfg, label
@@ -72,15 +67,26 @@ local plainName    -- the game's own text before the range was added
 
 function Levels.On() return cfg ~= nil and cfg.mapLevels ~= false end
 
+-- Retail's live range for a map, or nil when the API is missing/empty.
+function Levels.LiveRange(mapID)
+    local get = C_Map and C_Map.GetMapLevels
+    if type(get) ~= "function" or type(mapID) ~= "number" then return nil end
+    local ok, lo, hi = pcall(get, mapID)
+    if not ok or type(lo) ~= "number" or type(hi) ~= "number" then return nil end
+    if hi <= 0 and lo <= 0 then return nil end
+    return { lo, hi }
+end
+
 local function names()
     if byName then return byName end
     byName = {}
     local info = C_Map and C_Map.GetMapInfo
     if type(info) ~= "function" then return byName end
     for id, range in pairs(Levels.ZONES) do
+        local live = Levels.LiveRange(id)
         local ok, m = pcall(info, id)
         if ok and type(m) == "table" and type(m.name) == "string" and m.name ~= "" then
-            byName[m.name] = range
+            byName[m.name] = live or range
         end
     end
     return byName
@@ -105,7 +111,16 @@ end
 
 -- "Wetlands" -> "Wetlands (20-30)", or nil for a name with no range.
 function Levels.Text(name, level)
-    local range = type(name) == "string" and names()[name]
+    if type(name) ~= "string" then return nil end
+    local range = names()[name]
+    -- Open map not in the classic table: ask the client for this map's levels.
+    if not range then
+        local f = _G.WorldMapFrame
+        local mapID = type(f) == "table" and type(f.GetMapID) == "function" and f:GetMapID()
+        local live = Levels.LiveRange(mapID)
+        local info = live and C_Map and C_Map.GetMapInfo and C_Map.GetMapInfo(mapID)
+        if type(info) == "table" and info.name == name then range = live end
+    end
     if not range then return nil end
     local low, high = range[1], range[2]
     local span = low == high and tostring(high) or (low .. "-" .. high)

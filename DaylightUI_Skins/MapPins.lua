@@ -1,13 +1,13 @@
 -- World map pins: dungeon and raid entrances, flight masters (yours, or both
--- factions'), boats and zeppelins. Icons by Wawis (Media/mappin-*.png); the
+-- factions'), and optional travel docks. Icons by Wawis (Media/mappin-*.png); the
 -- flight boot is white and tinted by faction.
 --
 -- Entrances and flight masters come from the game's own tables (MapPinsData.lua,
 -- built by tools/make_mapdata.py) in world coordinates, which
--- C_Map.GetMapPosFromWorldPos turns into map positions once per map. Boats and
--- zeppelins are a hand-made list of Forever's docks (Pins.TRAVEL), also in world
--- coordinates. Only zone maps get pins. Pins that land on the same spot
--- (Blackrock Mountain, a zeppelin tower) merge into one that lists them all.
+-- C_Map.GetMapPosFromWorldPos turns into map positions once per map. Pins.TRAVEL
+-- and Pins.ENTRANCES are empty on Retail (Forever docks/dungeons only). Only
+-- zone maps get pins. Pins that land on the same spot merge into one that lists
+-- them all.
 --
 -- Like the map reveal, everything is an addon frame over the map canvas at the
 -- game's dungeon entrance level. The map's id, canvas and level table are only
@@ -32,52 +32,13 @@ Pins.COLORS = {
     both = { 0.91, 0.76, 0.48 },
 }
 
--- Boats and zeppelins: { kind, continent, world x, world y, destination area,
--- fallback name }. Each dock is a stop on one of Forever's transport paths
--- (TaxiPathNode, build 1.60.1.70334, path id in the trailing comment). The
--- destination name comes from the game (AreaTable, C_Map.GetAreaInfo).
-Pins.TRAVEL = {
-    { "boat", 0, -3905, -586, 513, "Theramore Isle" },          -- 292 Menethil Harbor
-    { "boat", 1, -4016, -4741, 150, "Menethil Harbor" },        -- 292 Theramore
-    { "boat", 0, -3709, -575, 271, "Southshore" },              -- 11167 Menethil Harbor
-    { "boat", 0, -3709, -575, 442, "Auberdine" },
-    { "boat", 0, -1103, -555, 150, "Menethil Harbor" },         -- 11167 Southshore
-    { "boat", 0, -1103, -555, 442, "Auberdine" },
-    { "boat", 1, 6406, 823, 271, "Southshore" },                -- 11167 Auberdine
-    { "boat", 1, 6406, 823, 150, "Menethil Harbor" },
-    { "boat", 1, 6594, 760, 702, "Rut'theran Village" },        -- 293 Auberdine
-    { "boat", 1, 8532, 1024, 442, "Auberdine" },                -- 293 Rut'theran Village
-    { "boat", 1, 6548, 942, 17203, "Stormwind Harbor" },        -- 11616 Auberdine
-    { "boat", 0, -8654, 1344, 442, "Auberdine" },               -- 11616 Stormwind Harbor
-    { "boat", 0, -14278, 583, 392, "Ratchet" },                 -- 241 Booty Bay
-    { "boat", 1, -1006, -3842, 35, "Booty Bay" },               -- 241 Ratchet
-    { "boat", 1, -4197, 3287, 1108, "The Forgotten Coast" },    -- 303 Feathermoon
-    { "boat", 1, -4348, 2444, 1116, "Feathermoon Stronghold" }, -- 303 the coast
-    { "boat", 1, -6933, -4951, 16727, "Powderfuse Port" },      -- 11391 Steamwheedle Port
-    { "boat", 0, -8232, -5801, 977, "Steamwheedle Port" },      -- 11391 Powderfuse Port
-    { "zeppelin", 1, 1318, -4658, 1497, "Undercity" },          -- 302 Orgrimmar
-    { "zeppelin", 0, 2062, 293, 1637, "Orgrimmar" },            -- 302 Undercity
-    { "zeppelin", 1, 1361, -4631, 117, "Grom'gol Base Camp" },  -- 285 Orgrimmar
-    { "zeppelin", 0, -12464, 232, 1637, "Orgrimmar" },          -- 285 Grom'gol
-    { "zeppelin", 0, 2063, 235, 117, "Grom'gol Base Camp" },    -- 301 Undercity
-    { "zeppelin", 0, -12407, 212, 1497, "Undercity" },          -- 301 Grom'gol
-    { "zeppelin", 0, 545, 424, 16638, "Valanaar" },             -- 11398 Dalaran
-    { "zeppelin", 2991, 1848, 569, 279, "Dalaran" },            -- 11398 Valanaar
-    { "zeppelin", 1, -802, 367, 16638, "Valanaar" },            -- 11457 Skywatcher Plateau
-    { "zeppelin", 2991, 1953, 1019, 17045, "Skywatcher Plateau" }, -- 11457 Valanaar
-}
+-- Boats and zeppelins used to be a Forever hand list. On Retail the game's own
+-- map data covers travel; keep the table empty so Forever docks are never drawn.
+Pins.TRAVEL = {}
 
--- Forever's new dungeons. The game's Map table has no corpse point for them and
--- C_EncounterJournal.GetDungeonEntrancesForMap returns nothing, so their entrances
--- come from the Forever guides: { kind, instance map id, zone map, x, y, players,
--- name }. If the game's data gains one later, that wins and it can be dropped
--- here. Manor Mistmantle's entrance isn't known yet.
-Pins.ENTRANCES = {
-    { "dungeon", 2998, 1437, 0.534, 0.653, 5, "Excavation Site: Wetlands" },
-    { "dungeon", 2999, 1420, 0.633, 0.675, 5, "Ruins of Lordaeron" },
-    { "dungeon", 3065, 1455, 0.435, 0.520, 5, "The Hall of Thanes" },
-    { "dungeon", 2959, 1421, 0.696, 0.461, 5, "City of Dalaran" },
-}
+-- Forever-only dungeon entrances. Retail uses C_EncounterJournal /
+-- MapPinsData instead.
+Pins.ENTRANCES = {}
 
 local cfg, frame, drawnFor, drawnW, drawnScale
 local pool, used = {}, 0
@@ -371,6 +332,12 @@ ns.Engine.Register({ key = "worldmap.questblob", apply = function()
     end
     if not found then return false end
 end })
+
+-- Drop the per-map pin cache (tests that inject TRAVEL/ENTRANCES, or a later
+-- data refresh). The next Draw rebuilds from the tables and the game's data.
+function Pins.Forget()
+    spots, drawnFor = {}, nil
+end
 
 function Pins.Start(c)
     cfg = c

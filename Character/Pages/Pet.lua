@@ -235,9 +235,16 @@ function PetPage.OnEvent(_, event, unit)
     end
 end
 
-PetPage.events = { "UNIT_PET", "UNIT_PET_EXPERIENCE", "PET_STATS_UPDATE" }
+-- Retail has no pet XP or happiness events. Only register what this client has.
+PetPage.events = { "UNIT_PET", "PET_STATS_UPDATE" }
+if type(GetPetExperience) == "function" then
+    PetPage.events[#PetPage.events + 1] = "UNIT_PET_EXPERIENCE"
+end
 -- Asked for "player" and "pet" both (Window.lua): your stats feed your pet's.
-PetPage.petEvents = { "UNIT_HAPPINESS", "UNIT_MODEL_CHANGED", "UNIT_NAME_UPDATE", "UNIT_LEVEL", "UNIT_STATS",
+PetPage.petEvents = { "UNIT_MODEL_CHANGED", "UNIT_NAME_UPDATE", "UNIT_LEVEL", "UNIT_STATS",
     "UNIT_ATTACK_POWER", "UNIT_DAMAGE", "UNIT_RESISTANCES", "UNIT_MAXHEALTH", "UNIT_MAXPOWER" }
+if C_PetInfo and type(C_PetInfo.GetPetHappiness) == "function" then
+    PetPage.petEvents[#PetPage.petEvents + 1] = "UNIT_HAPPINESS"
+end
 
 ns.Window.Register("pet", PetPage)

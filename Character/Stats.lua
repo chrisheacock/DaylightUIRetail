@@ -25,8 +25,9 @@ Stats.ROLE_OPEN = { TANK = "defense", HEALER = "spell", MELEE = "attack" }
 -- Damage specs of a caster class that fight in melee: Enhancement and Feral.
 Stats.MELEE_SPECS = { [263] = true, [103] = true }
 Stats.CLASS_OPEN = { WARRIOR = "attack", ROGUE = "attack", PALADIN = "attack", HUNTER = "ranged", MAGE = "spell",
-    WARLOCK = "spell", PRIEST = "spell", DRUID = "spell", SHAMAN = "spell" }
-Stats.NO_MANA = { WARRIOR = true, ROGUE = true }
+    WARLOCK = "spell", PRIEST = "spell", DRUID = "spell", SHAMAN = "spell",
+    DEATHKNIGHT = "attack", MONK = "attack", DEMONHUNTER = "attack", EVOKER = "spell" }
+Stats.NO_MANA = { WARRIOR = true, ROGUE = true, DEATHKNIGHT = true, DEMONHUNTER = true }
 
 local isSecret = DUI.IsSecret
 

@@ -961,6 +961,13 @@ end
 
 DT.SHARD = 6265
 function DT.ReadShards()
+    -- Retail warlocks: Soul Shards are a power type, not bag items.
+    local E = _G.Enum and _G.Enum.PowerType
+    local shardPower = E and (E.SoulShards or E.SOUL_SHARDS)
+    if type(shardPower) == "number" and type(_G.UnitPower) == "function" then
+        local n = num(call(_G.UnitPower, "player", shardPower))
+        if n ~= nil then return n end
+    end
     local fn = api("C_Item", "GetItemCount") or _G.GetItemCount
     return num(call(fn, DT.SHARD))
 end

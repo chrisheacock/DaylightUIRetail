@@ -11,10 +11,18 @@
 local _, DUI = ...
 
 DUI.PatchNotes = {
-    { version = "Unreleased", new = {
-        { "Quests", "Drag a zone's name in the quest tracker to put your zones in your own order, or right-click Quests to sort them A to Z or by level" },
+    { version = "Unreleased" },
+    { version = "0.1.0", date = "2026-11-24", summary = "First Retail (Midnight) build of Daylight UI. Forever and Classic clients never load it.", new = {
+        { "Retail", "Loads only on WoW Retail (Midnight). Classic and Forever are excluded" },
+        { "Character keys", "Saved as Name-Realm. Roleplay last names from Total RP 3 still show where you turn them on" },
+        { "Stable", "Skins Retail's StableFrame" },
+        { "Procs", "Action button proc glow and spell activation overlays work on Retail" },
     }, fixed = {
-        { "Professions", "Rogues with the Reagent Economy Legacy perk can make poisons in the profession window without the materials, as in the game's own window" },
+        { "Unit Frames", "Pet happiness is skipped on Retail so UNIT_HAPPINESS is never registered" },
+        { "Map", "Zone level ranges prefer C_Map.GetMapLevels; Forever-only zones and docks are gone" },
+        { "Cooldown Manager", "Forever's Overpower dodge-window workaround is off on Retail" },
+        { "Info Panel", "Soul Shards reads the warlock power, not classic shard items in bags" },
+        { "Profiles", "Spec changes also listen to PLAYER_SPECIALIZATION_CHANGED" },
     } },
     { version = "2.2.7", date = "2026-11-24", summary = "Overpower lights up after a dodge in any stance, cast bars for mob channels, and item tooltips show every line again.", new = {
         { "Cooldown Manager", "Overpower now lights up and plays its sound after your target dodges in any stance, so you know when to switch to Battle Stance for it" },
