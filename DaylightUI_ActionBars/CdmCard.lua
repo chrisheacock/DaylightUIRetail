@@ -677,8 +677,8 @@ Card.ROWS = {
         { show = both(isIcon, isCooldown), item = spell("desat", { type = "dropdown", label = "Gray out",
             values = { game = "Default", grey = "Gray", color = "Stay colored" }, order = { "game", "grey", "color" } }) },
         -- Usable applies to cooldowns only; Buff only has nothing to be usable.
-        -- WoW Forever fires no proc alerts, so there's no proc glow row (its code
-        -- stays idle in CdmEffects). Turned on for Slice and Dice, nothing glowed.
+        -- Proc glow rows are added below on Retail, where the game fires spell
+        -- alerts. Forever does not, so those rows are not offered there.
         { head = L["Usable"], show = isCooldown },
         { show = isCooldown, item = spell("onUnusable", { type = "dropdown", label = "Not usable",
             values = { show = "Show", fade = "Fade", hide = "Hide" }, order = { "show", "fade", "hide" },
@@ -773,6 +773,21 @@ Card.ROWS = {
             desc = "Frees it right where it is, with everything hanging off it.", func = unhook } },
     },
 }
+
+-- Retail's spell alerts light the ring (CdmEffects, glow). Forever never fires
+-- them, so the rows stay off that client: a Glow switch there did nothing.
+if DUI.Client and DUI.Client.Retail and DUI.Client.Retail() then
+    local rows, at = Card.ROWS.show, #Card.ROWS.show + 1
+    for i, r in ipairs(rows) do
+        if r.head == L["Usable"] then at = i break end
+    end
+    local procShow = function(...) return isCooldown(...) end
+    table.insert(rows, at, { head = L["Proc"], show = procShow })
+    table.insert(rows, at + 1, { show = procShow, item = spell("glow", { type = "toggle", label = "Glow on proc",
+        desc = "The spell alert ring while the game says this spell is ready to use." }) })
+    table.insert(rows, at + 2, { show = function(...) return isCooldown(...) and opt("glow") ~= false end,
+        item = spell("glowColor", { type = "color", label = "Proc glow color" }) })
+end
 
 -- A custom gradient's rows (how many colors, then each one), all kept in one
 -- saved table that read() and write(t) get and set: right under the row whose

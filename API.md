@@ -18,8 +18,9 @@ AI tools often write WoW code for the wrong version of the game (old Classic rul
 calls that don't exist. Paste this at the start of your chat so it writes code that works:
 
 ```
-I'm writing a World of Warcraft addon for WoW: Forever (Interface 16001). It runs on the modern
-client (Midnight 12.x rules): secret values in combat and under addon restrictions, C_* namespaces.
+I'm writing a World of Warcraft addon for WoW Retail (Midnight, Interface 120105). It also runs
+on WoW: Forever (Interface 16001). Both use the modern client (Midnight 12.x rules): secret values
+in combat and under addon restrictions, C_* namespaces. On Retail, DaylightUI.Client.Retail() is true.
 It builds on the Daylight UI addon, through DaylightUI.API. Rules:
 - Use the calls in Daylight UI's API.md (I'll paste it) first. Don't invent DaylightUI calls.
 - You may read any of Daylight UI's files (the DaylightUI folder and every DaylightUI_ module

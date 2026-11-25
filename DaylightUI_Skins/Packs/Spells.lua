@@ -17,11 +17,13 @@ local function professionPanel(Kit, panel)
         if Kit.Kind(r) == "FontString" then Kit.Font(r) end
     end
     -- The skill bar's expansion picker (retail's Classic/Outland/... lines).
-    -- Forever has one line per profession, so it's just a stray box at the
-    -- end of the bar. Faded out and made click-through.
+    -- Forever has one line per profession, so there it is a stray box at the
+    -- end of the bar. Faded out and made click-through. On Retail it picks
+    -- the expansion, so it stays.
     local bar = panel.StatusBar
     local pick = type(bar) == "table" and bar.ExpansionDropdownButton
-    if type(pick) == "table" then
+    local forever = DaylightUI.Client and DaylightUI.Client.Forever and DaylightUI.Client.Forever()
+    if type(pick) == "table" and forever then
         Kit.Hide(pick)
         if pick.EnableMouse then pick:EnableMouse(false) end
     end

@@ -246,7 +246,12 @@ function TD.Read(configID, opts)
             end
         end
     end
-    local o = { step = opts.step or TD.STEP, span = opts.span or TD.SPAN, cols = opts.cols or 4, rows = opts.rows or 7 }
+    -- Forever's trees sit on a 600-unit classic grid, at least 4 by 7.
+    -- Retail class, spec and hero trees use their own spacing and can be
+    -- wider than ten tiles, so the step is measured and the board grows.
+    local retail = DUI.Client and DUI.Client.Retail and DUI.Client.Retail()
+    local o = { step = opts.step or (retail and "auto" or TD.STEP), span = opts.span or (retail and 24 or TD.SPAN),
+        cols = opts.cols or (retail and 1 or 4), rows = opts.rows or (retail and 1 or 7) }
     if o.step == "auto" then
         local xs, ys = {}, {}
         for _, node in pairs(out.byID) do xs[#xs + 1] = node.x; ys[#ys + 1] = node.y end

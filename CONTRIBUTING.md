@@ -6,9 +6,10 @@ pull request etiquette, and whether your idea fits better as a plugin are in the
 
 ## Setup
 
-DaylightUI is built for WoW: Forever only (Interface 16001). It's classic content on the modern
-client, so the modern addon rules apply: secret values, Edit Mode, `C_*` APIs. Code written for
-old Classic clients usually won't work.
+DaylightUI is built for WoW Retail (Midnight, Interface 120105; the 12.1.7 PTR is 120107).
+The same addons also load on WoW: Forever (Interface 16001). Both are modern clients, so the
+modern addon rules apply: secret values, Edit Mode, `C_*` APIs. Code written for old Classic
+clients usually won't work. `DaylightUI.Client.Retail()` is true on Retail and false on Forever.
 
 1. Fork and clone the repo somewhere **outside** the game folder (Battle.net can't update the game
    while an editor has files open inside it).
@@ -18,8 +19,9 @@ old Classic clients usually won't work.
    powershell -ExecutionPolicy Bypass -File tools\link_dev.ps1
    ```
 
-   This makes junctions in `Interface\AddOns` for the core and every module. Pass
-   `-Game "D:\path\to\_forever_"` if the game isn't in the default place.
+   This makes junctions in `Interface\AddOns` for the core and every module. The
+   default game folder is Retail (`_retail_`). Pass `-Game "D:\path\to\_forever_"`
+   for WoW: Forever, or set `WOW_RETAIL` / `WOW_FOREVER`.
 3. `/reload` in game picks up every change, new files included.
 
 ## Tests

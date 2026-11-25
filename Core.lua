@@ -10,7 +10,7 @@ DUI.ADDON_NAME = ADDON_NAME
 
 -- What the core files define. If one is missing at login (an update caught
 -- halfway) a single line is printed. tests/test_guards.lua keeps this in sync.
-DUI.CORE_PARTS = { "DB", "Pixel", "Style", "Tips", "GameFonts", "DamageText", "Motion", "Sound", "Pad", "Media", "Health", "Weapons", "Threat", "Interrupt", "Spots", "Dots", "PrivateAuras", "Taint", "BugReport", "PlateReport", "Gradients", "BarFx", "Movers",
+DUI.CORE_PARTS = { "Client", "DB", "Pixel", "Style", "Tips", "GameFonts", "DamageText", "Motion", "Sound", "Pad", "Media", "Health", "Weapons", "Threat", "Interrupt", "Spots", "Dots", "PrivateAuras", "Taint", "BugReport", "PlateReport", "Gradients", "BarFx", "Movers",
     "GameMovers", "PTRButton", "QuestieAside", "PrettyAside", "OpenMap", "CombatText", "Fade", "FadeUpgrade", "EditMode", "Options", "OptionsTheme", "Widgets", "SampleStrip",
     "OptionsNav", "OptionsResults", "OptionsPanel", "Installer", "InstallerDraft", "InstallerPages", "InstallerCards", "InstallerScreen",
     "InstallerUI", "InstallerChrome", "InstallerSteps", "InstallerPlugins", "InstallerLooks", "InstallerDuel", "Welcome", "Profiles", "Alts", "Plugins", "APIReport", "Donators", "Notes", "TestBox", "Win", "Tour" }
@@ -194,6 +194,9 @@ function DUI.UnitName(unit, element)
     if not full or type(last) ~= "string" then return first end
     if issecretvalue and (issecretvalue(first) or issecretvalue(last)) then return first end
     if type(first) ~= "string" or last == "" then return first end
+    -- On Retail the second value is the realm. Joining it would print
+    -- "Name Stormrage" on a cross-realm unit. Surnames are Forever's.
+    if DUI.Client and DUI.Client.Retail and DUI.Client.Retail() then return first end
     return first .. " " .. last
 end
 

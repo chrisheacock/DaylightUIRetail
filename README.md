@@ -3,10 +3,10 @@
 ![Daylight UI](https://raw.githubusercontent.com/dayightt/DaylightUI/main/screenshots/logo-banner.png)
 
 [![Latest release](https://img.shields.io/github/v/release/dayightt/DaylightUI?include_prereleases&style=flat-square&label=release&color=766ee0)](https://github.com/dayightt/DaylightUI/releases/latest)
-![Built for WoW: Forever](https://img.shields.io/badge/built%20for-WoW%3A%20Forever-f67a44?style=flat-square)
+![Built for WoW Retail](https://img.shields.io/badge/built%20for-WoW%20Retail-f67a44?style=flat-square)
 [![Discord](https://img.shields.io/badge/discord-join-5865f2?style=flat-square&logo=discord&logoColor=white)](https://discord.gg/eeSYZDd6ar)
 
-**A complete UI suite for WoW: Forever.** Soft, modern, and one look across everything.
+**A complete UI suite for WoW Retail.** Soft, modern, and one look across everything. It also loads on WoW: Forever, which shares Retail's modern client.
 
 [Download on CurseForge](https://www.curseforge.com/wow/addons/daylightui) | [GitHub releases](https://github.com/dayightt/DaylightUI/releases/latest) | [Discord](https://discord.gg/eeSYZDd6ar)
 
@@ -75,7 +75,7 @@ Plugins need no permission, aren't held up by review, and keep working across up
 3. **No cost when idle.** Nothing new runs every frame while nothing is happening. Use events, throttles, or hide the frame. `tests/test_lag.lua` checks this.
 4. **Safe in combat.** No taint, no hooks on the game's own frames, protected frames only touched out of combat, and secret values never compared, added up or tested in an `if`. `tests/test_guards.lua` and `tests/test_secrets.lua` catch most mistakes.
 5. **Good defaults.** A new option's default has to suit every class, role, group size and screen size. Plenty of players never open the options.
-6. **WoW: Forever only.** Interface 16001, which runs on the modern client with the modern addon rules. Code written for older Classic clients usually doesn't apply.
+6. **WoW Retail (Midnight).** Interface 120105 (12.1.7 PTR is 120107). The same files also load on WoW: Forever (Interface 16001): both are modern clients, with secret values and `C_*` APIs. Code written for older Classic clients usually doesn't apply. Forever-only systems (surnames, one profession line, no spell-alert procs) stay on Forever; Retail keeps its own.
 
 ## Look and code style
 
@@ -104,7 +104,7 @@ Plugins need no permission, aren't held up by review, and keep working across up
 
 AI tools are fine to use, but the PR is yours and so is every line in it.
 
-- Check how the game actually behaves instead of trusting the tool's memory. `luajit tools/api.lua <name>` shows a function's arguments, whether it returns secret values, and where Daylight UI already uses it. The game's own UI code is in [Gethe/wow-ui-source](https://github.com/Gethe/wow-ui-source) on the `forever` branch.
+- Check how the game actually behaves instead of trusting the tool's memory. `luajit tools/api.lua <name>` shows a function's arguments, whether it returns secret values, and where Daylight UI already uses it. Retail UI code is the `live` branch of [Gethe/wow-ui-source](https://github.com/Gethe/wow-ui-source); Forever's is the `forever` branch. `DaylightUI.Client.Retail()` is true on Retail.
 - Only original code. Don't paste in code from other addons, and check what the tool wrote for anything copied.
 - Reuse the helpers that already exist instead of writing new copies.
 - Keep the comments short. Long, chatty comments and notes about how the code was written get removed in review.
