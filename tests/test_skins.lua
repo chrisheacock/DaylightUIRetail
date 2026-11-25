@@ -2739,8 +2739,8 @@ T.test("skins: the game's quest area on the world map fades with the map", funct
 end)
 
 -- The world map's pins (MapPins.lua). Entrances and flight masters placed by the
--- client, plus the addon's boats and zeppelins. Pins on the same spot merge into
--- one, and pins keep their size as the map zooms.
+-- client. Travel docks and extra entrances can be injected (Retail ships none).
+-- Pins on the same spot merge into one, and pins keep their size as the map zooms.
 T.test("skins: world map pins show entrances, your flight masters and boats, merged on one spot", function()
     local f
     login(function()
@@ -2757,6 +2757,7 @@ T.test("skins: world map pins show entrances, your flight masters and boats, mer
             if id == 1458 then return { mapType = 3, name = "Undercity" } end
             if id == 1454 then return { mapType = 3, name = "Orgrimmar" } end
             if id == 947 then return { mapType = 1, name = "Azeroth" } end
+            if id == 1437 then return { mapType = 3, name = "Wetlands" } end
         end
         -- The client's answer: world x/y straight to a spot, only on Stranglethorn.
         _G.CreateVector2D = function(x, y) return { GetXY = function() return x, y end } end
@@ -2782,7 +2783,18 @@ T.test("skins: world map pins show entrances, your flight masters and boats, mer
     end)
     T.eq(#stub.errors, 0, tostring(stub.errors[1]))
     local P = stub.skins.MapPins
+    -- Retail ships empty travel/entrance tables; inject sample docks to cover the path.
+    P.TRAVEL = {
+        { "boat", 0, -14278, 583, 392, "Ratchet" },
+        { "zeppelin", 0, -12464, 232, 1637, "Orgrimmar" },
+        { "zeppelin", 0, -12407, 212, 1497, "Undercity" },
+    }
+    P.ENTRANCES = {
+        { "dungeon", 2998, 1437, 0.534, 0.653, 5, "Excavation Site: Wetlands" },
+    }
+    P.Forget()
     f:Show()
+    P.Draw()   -- rebuild with the injected travel docks
     T.eq(P.frame:IsShown(), true, "on by default")
     T.eq(P.frame:GetFrameLevel(), 2100, "at the game's dungeon entrance level")
     local function shown()
@@ -2855,20 +2867,16 @@ T.test("skins: world map pins show entrances, your flight masters and boats, mer
     f.mapID = 947
     P.MapSet()   -- the game's "MapCanvas.MapSet"
     T.eq(#shown(), 0)
-    -- Forever's new dungeons have no corpse point. The addon's own list puts
-    -- Excavation Site on the Wetlands, using the game's name when it has one.
-    local info = C_Map.GetMapInfo
-    C_Map.GetMapInfo = function(id)
-        if id == 1437 then return { mapType = 3, name = "Wetlands" } end
-        return info(id)
-    end
+    -- An injected entrance on Wetlands (Retail ships none of these).
     f.mapID = 1437
-    P.MapSet()   -- the game's "MapCanvas.MapSet"
+    P.Forget()
+    P.MapSet()
+    P.Draw()
     local got = {}
     for _, b in ipairs(shown()) do
         if b.pin.family == "instance" then got[#got + 1] = b end
     end
-    T.eq(#got, 1, "Excavation Site's entrance (Menethil's boats aside)")
+    T.eq(#got, 1, "injected Excavation Site entrance")
     T.eq(got[1].pin.kind, "dungeon")
     T.eq(got[1].pin.lines[1][1], "Excavation Site: Wetlands")
     T.near(got[1].pin.x, 0.534, 0.0001)

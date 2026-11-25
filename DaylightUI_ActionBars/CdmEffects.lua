@@ -1050,34 +1050,34 @@ local function readAlert(item)
 end
 
 -- Overpower on Forever: a dodge by your target opens a 5 s window, kept as a
--- hidden buff on you that can't be read in a fight. The game only answers
--- "usable" in Battle Stance, so outside it Overpower never lit up for a warrior
--- who'd swap stances to use it. Outside Battle Stance, the target's dodge
--- (UNIT_COMBAT's action stays plain) opens the window here. It can't tell whose
--- attack was dodged, so in Battle Stance the game's own answer stands.
+-- hidden buff on you that can't be read in a fight. Classic Overpower ranks and
+-- Battle Stance don't apply on Retail, so this path stays off there.
 Fx.OVERPOWER = { [7384] = true, [7887] = true, [11584] = true, [11585] = true }
 Fx.OVERPOWER_WINDOW = 5
 local dodgedAt = nil
 
 local function overpowerOpen(sid)
+    if not (DUI.Client and DUI.Client.Forever and DUI.Client.Forever()) then return false end
     return Fx.OVERPOWER[sid] == true and dodgedAt ~= nil and formNow ~= "Battle"
         and GetTime() - dodgedAt < Fx.OVERPOWER_WINDOW
 end
 
 local dodges = CreateFrame("Frame")
-dodges:RegisterUnitEvent("UNIT_COMBAT", "target")
-dodges:RegisterEvent("PLAYER_TARGET_CHANGED")
-dodges:SetScript("OnEvent", function(_, event, _, action)
-    if event == "PLAYER_TARGET_CHANGED" then
-        if dodgedAt then dodgedAt = nil; Fx.Soon(false) end
-        return
-    end
-    if secret(action) or action ~= "DODGE" then return end
-    dodgedAt = GetTime()
-    Fx.Soon(false)
-    -- Nothing else says when the window ends.
-    C_Timer.After(Fx.OVERPOWER_WINDOW + 0.05, function() Fx.Soon(false) end)
-end)
+if DUI.Client and DUI.Client.Forever and DUI.Client.Forever() then
+    dodges:RegisterUnitEvent("UNIT_COMBAT", "target")
+    dodges:RegisterEvent("PLAYER_TARGET_CHANGED")
+    dodges:SetScript("OnEvent", function(_, event, _, action)
+        if event == "PLAYER_TARGET_CHANGED" then
+            if dodgedAt then dodgedAt = nil; Fx.Soon(false) end
+            return
+        end
+        if secret(action) or action ~= "DODGE" then return end
+        dodgedAt = GetTime()
+        Fx.Soon(false)
+        -- Nothing else says when the window ends.
+        C_Timer.After(Fx.OVERPOWER_WINDOW + 0.05, function() Fx.Soon(false) end)
+    end)
+end
 
 -- Castable now, per the game (plain in combat too). A secret or missing answer
 -- keeps the last one, so "When not usable" never hides or darkens a spell when

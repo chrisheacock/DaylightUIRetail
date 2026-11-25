@@ -111,3 +111,58 @@ T.test("stable: Retail's StableFrame is the skinned window", function()
     end
     T.truthy(found, "StableFrame is registered")
 end)
+
+T.test("map: Forever-only zones and docks are not shipped", function()
+    stub.Load({ skins = true })
+    local L, P = stub.skins.MapLevels, stub.skins.MapPins
+    T.isnil(L.ZONES[2521], "no Zephras")
+    T.isnil(L.ZONES[2548], "no Riverglades")
+    T.isnil(L.ZONES[2482], "no Forever Hyjal")
+    T.eq(#P.TRAVEL, 0, "no Forever docks")
+    T.eq(#P.ENTRANCES, 0, "no Forever dungeon entrances")
+end)
+
+T.test("map: C_Map.GetMapLevels wins over the classic table when it answers", function()
+    stub.Load({ skins = true })
+    _G.C_Map = _G.C_Map or {}
+    C_Map.GetMapLevels = function(id)
+        if id == 1437 then return 22, 28 end
+    end
+    local r = stub.skins.MapLevels.LiveRange(1437)
+    T.deq(r, { 22, 28 })
+    C_Map.GetMapLevels = nil
+end)
+
+T.test("character pet page: no UNIT_HAPPINESS without the happiness API", function()
+    local DUI = stub.Load()
+    local Pet = DUI.Char.PetPage
+    for _, e in ipairs(Pet.petEvents) do
+        T.falsy(e == "UNIT_HAPPINESS", e)
+    end
+    for _, e in ipairs(Pet.events) do
+        T.falsy(e == "UNIT_PET_EXPERIENCE", e)
+    end
+end)
+
+T.test("info panel: Soul Shards prefer the warlock power type", function()
+    _G.Enum = _G.Enum or {}
+    _G.Enum.PowerType = { SoulShards = 7 }
+    local was = _G.UnitPower
+    _G.UnitPower = function(u, pt)
+        if u == "player" and pt == 7 then return 3 end
+        if was then return was(u, pt) end
+        return 0
+    end
+    stub.Load({ infopanel = true })
+    T.eq(stub.infopanel.DataTexts.ReadShards(), 3)
+    _G.UnitPower = was
+    _G.Enum.PowerType = nil
+end)
+
+T.test("version: Retail fork starts at 0.1.0", function()
+    local DUI = stub.Load()
+    T.eq(DUI.Notes.Latest(), "0.1.0")
+    local f = assert(io.open("DaylightUI.toc", "r"))
+    local toc = f:read("*a"); f:close()
+    T.eq(string.match(toc, "## Version:%s*(%S+)"), "0.1.0")
+end)

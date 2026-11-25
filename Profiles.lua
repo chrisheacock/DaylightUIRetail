@@ -1427,7 +1427,11 @@ function Profiles.OnTalentsChanged()
     Profiles.CheckSwitch(L["These talents use the profile %s. Switch to it?"])
 end
 
+-- Forever dual-spec: ACTIVE_TALENT_GROUP_CHANGED. Retail: PLAYER_SPECIALIZATION_CHANGED.
 pcall(DUI.RegisterEvent, "ACTIVE_TALENT_GROUP_CHANGED", function() Profiles.OnTalentsChanged() end)
+pcall(DUI.RegisterEvent, "PLAYER_SPECIALIZATION_CHANGED", function(_, unit)
+    if unit == nil or unit == "player" then Profiles.OnTalentsChanged() end
+end)
 
 -- The game's controller UI was turned on or off (Settings > Gameplay >
 -- Gamepad): switch to or from its controller profile if that's different.

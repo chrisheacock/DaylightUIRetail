@@ -1,3 +1,20 @@
+# DaylightUI 0.1.0
+
+First Retail (Midnight) build of Daylight UI. Forever and Classic clients never load it.
+
+## New
+- Retail: Loads only on WoW Retail (Midnight). Classic and Forever are excluded
+- Character keys: Saved as Name-Realm. Roleplay last names from Total RP 3 still show where you turn them on
+- Stable: Skins Retail's StableFrame
+- Procs: Action button proc glow and spell activation overlays work on Retail
+
+## Fixed
+- Unit Frames: Pet happiness is skipped on Retail so UNIT_HAPPINESS is never registered
+- Map: Zone level ranges prefer C_Map.GetMapLevels; Forever-only zones and docks are gone
+- Cooldown Manager: Forever's Overpower dodge-window workaround is off on Retail
+- Info Panel: Soul Shards reads the warlock power, not classic shard items in bags
+- Profiles: Spec changes also listen to PLAYER_SPECIALIZATION_CHANGED
+
 # DaylightUI 2.2.7
 
 Overpower lights up after a dodge in any stance, cast bars for mob channels, and item tooltips show every line again.
