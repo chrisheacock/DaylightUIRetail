@@ -99,7 +99,10 @@ end
 function M.boopy(last, class, db)
     local DUI = M.loadWorld({ actionbars = true, before = function()
         _G.GetRealmName = function() return "R" end
-        stub.units.player = { name = "Boopy", lastName = last, isPlayer = true, class = class }
+        -- Distinct GUIDs so AdoptOldKeys does not merge two characters that
+        -- share a first name on Retail's Name-Realm keys.
+        stub.units.player = { name = "Boopy", lastName = last, isPlayer = true, class = class,
+            guid = "Player-1-" .. tostring(last) }
         DaylightUIDB = db or DaylightUIDB
     end })
     return DUI, stub.actionbars.CdmData

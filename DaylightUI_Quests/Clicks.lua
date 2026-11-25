@@ -38,8 +38,11 @@ Clicks.MENU_TEXT = { map = L["Show on map"], details = L["Quest details"], share
                      untrack = L["Stop tracking"], abandon = L["Abandon"],
                      priority = L["Make it your priority"], fold = L["Fold this quest"],
                      turnin = L["Show hand-in on map"], link = L["Link in chat"], wowhead = L["Wowhead link"] }
--- Same link Questie's own Forever menu uses.
-Clicks.WOWHEAD = "https://www.wowhead.com/forever/quest="
+Clicks.WOWHEAD = "https://www.wowhead.com/quest="
+
+function Clicks.WowheadBase()
+    return Clicks.WOWHEAD
+end
 
 local function refuse(text)
     DUI.ShowError(text)
@@ -231,7 +234,7 @@ function Clicks.Do(k, q)
     elseif k == "link" then
         if not link(q.id) then refuse(Clicks.LINK_NO_CHAT) end
     elseif k == "wowhead" then
-        DUI.Widgets.Prompt(L["Wowhead link (Ctrl+C copies it):"], Clicks.WOWHEAD .. q.id)
+        DUI.Widgets.Prompt(L["Wowhead link (Ctrl+C copies it):"], Clicks.WowheadBase() .. q.id)
     elseif k == "share" then
         ns.Journal.Share(q)
     elseif k == "untrack" then

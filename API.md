@@ -18,8 +18,9 @@ AI tools often write WoW code for the wrong version of the game (old Classic rul
 calls that don't exist. Paste this at the start of your chat so it writes code that works:
 
 ```
-I'm writing a World of Warcraft addon for WoW: Forever (Interface 16001). It runs on the modern
-client (Midnight 12.x rules): secret values in combat and under addon restrictions, C_* namespaces.
+I'm writing a World of Warcraft addon for WoW Retail (Midnight, Interface 120105). It uses the
+modern client (Midnight 12.x rules): secret values in combat and under addon restrictions, C_*
+namespaces. DaylightUI.Client.Retail() is true while Daylight UI is loaded.
 It builds on the Daylight UI addon, through DaylightUI.API. Rules:
 - Use the calls in Daylight UI's API.md (I'll paste it) first. Don't invent DaylightUI calls.
 - You may read any of Daylight UI's files (the DaylightUI folder and every DaylightUI_ module
@@ -875,8 +876,8 @@ change: draw on the `API.Attach` holder.
 Events, each with the spell id and the piece's key: `CooldownStarted` and `CooldownReady` (1.7),
 the moments Daylight UI's own ready light runs; and since 1.14 `CooldownUsable` (it turns castable
 while off cooldown: a block for Revenge, a low target for Execute; not just rage coming back),
-`CooldownProc` (the game's spell alert came on or went off, with `true` or `false`; few spells
-have one on WoW: Forever), `CooldownBuffUp` and `CooldownBuffDown` (as the game's own item says,
+`CooldownProc` (the game's spell alert came on or went off, with `true` or `false`),
+`CooldownBuffUp` and `CooldownBuffDown` (as the game's own item says,
 so a debuff on your target counts, and it follows a target swap).
 
 Every answer is a plain value, never a secret one, so you can compare them and use them in an `if`
@@ -1157,7 +1158,7 @@ Daylight UI runs on the modern client's addon rules, and so does your code:
 
 - **Nothing happens at all.** Check the folder name, the `.toc` name and the file list in the
   `.toc` all match. Open the AddOns list on the character screen and check your addon is ticked and
-  not marked "out of date" (the `## Interface: 16001` line).
+  not marked "out of date" (the `## Interface: 120105` line).
 - **A Lua error pops up.** Get [BugSack](https://www.curseforge.com/wow/addons/bugsack) so you can
   see and copy the whole error. Give it to your AI, or read the first line: it names the file and
   line number.

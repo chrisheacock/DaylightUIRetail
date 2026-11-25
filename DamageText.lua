@@ -3,10 +3,10 @@
 -- game's are the only numbers that show just your hits. The font goes in
 -- DAMAGE_TEXT_FONT (see GameFonts.lua), which the client reads once at login,
 -- so a change shows after a game restart.
--- Motion: Forever has no WorldText* motion settings, only the directional ones
--- below. At a spread of 0 (the client default) numbers go straight up; above
--- 0 they burst out sideways from the target. Size is WorldTextScale_v2; the
--- plain WorldTextScale doesn't exist on Forever.
+-- Motion: both Forever and Retail Midnight use the directional _v2 names
+-- below. At a spread of 0 (the client default) numbers go straight up;
+-- above 0 they burst out sideways from the target. A client that only has
+-- the older unsuffixed names gets those instead.
 
 local _, DUI = ...
 local L = DUI.L
@@ -15,10 +15,11 @@ local DT = {}
 DUI.DamageText = DT
 
 -- Daylight UI's setting (damage.<key>) -> the game's CVar, and the client's own default.
+-- The _v2 name first. The first one this client actually has is the one written.
 DT.CVARS = {
-    size = "WorldTextScale_v2",
-    spread = "floatingCombatTextCombatDamageDirectionalScale_v2",
-    height = "floatingCombatTextCombatDamageDirectionalOffset_v2",
+    size = { "WorldTextScale_v2", "WorldTextScale" },
+    spread = { "floatingCombatTextCombatDamageDirectionalScale_v2", "floatingCombatTextCombatDamageDirectionalScale" },
+    height = { "floatingCombatTextCombatDamageDirectionalOffset_v2", "floatingCombatTextCombatDamageDirectionalOffset" },
 }
 DT.GAME = { size = 1, spread = 0, height = 1 } -- Forever's defaults, for when the client can't say
 DT.ORDER = { "size", "spread", "height" }
@@ -34,9 +35,10 @@ DT.PRESET_ORDER = { "game", "soft", "punchy", "clean" }
 
 -- The game's switches for which numbers show (stored by the game, not by Daylight UI).
 DT.SHOW = {
-    damage = { "floatingCombatTextCombatDamage_v2" },
-    healing = { "floatingCombatTextCombatHealing_v2" },
-    pet = { "floatingCombatTextPetMeleeDamage_v2", "floatingCombatTextPetSpellDamage_v2" },
+    damage = { "floatingCombatTextCombatDamage_v2", "floatingCombatTextCombatDamage" },
+    healing = { "floatingCombatTextCombatHealing_v2", "floatingCombatTextCombatHealing" },
+    pet = { "floatingCombatTextPetMeleeDamage_v2", "floatingCombatTextPetSpellDamage_v2",
+            "floatingCombatTextPetMeleeDamage", "floatingCombatTextPetSpellDamage" },
 }
 
 local function cvar(name)
@@ -53,14 +55,24 @@ local function cvarDefault(name)
     return ok and tonumber(v) or nil
 end
 
+-- The CVar this client has for damage.<key>, or the _v2 name when neither exists.
+function DT.CVar(key)
+    local names = DT.CVARS[key]
+    if type(names) ~= "table" then return names end
+    for _, name in ipairs(names) do
+        if cvar(name) ~= nil then return name end
+    end
+    return names[1]
+end
+
 -- The client's own value for damage.<key>.
 function DT.Default(key)
-    return cvarDefault(DT.CVARS[key]) or DT.GAME[key]
+    return cvarDefault(DT.CVar(key)) or DT.GAME[key]
 end
 
 -- Whether this client has the game setting behind damage.<key>.
 function DT.Has(key)
-    local name = DT.CVARS[key]
+    local name = DT.CVar(key)
     return name ~= nil and cvar(name) ~= nil
 end
 
@@ -103,7 +115,7 @@ function DT.Apply()
     DUI.AfterCombat(function()
         if type(SetCVar) ~= "function" then return end
         for _, key in ipairs(DT.ORDER) do
-            local name = DT.CVARS[key]
+            local name = DT.CVar(key)
             local now, want = cvar(name), value(key)
             if now ~= nil and math.abs(now - want) > 0.0001 then
                 DUI.SafeCall(SetCVar, name, string.format("%.2f", want))
@@ -114,10 +126,16 @@ function DT.Apply()
 end
 
 -- One of the game's show switches: on, off, or nil if this client lacks it.
+local function shownName(what)
+    for _, name in ipairs(DT.SHOW[what]) do
+        if cvar(name) ~= nil then return name end
+    end
+end
+
 function DT.Shown(what)
-    local v = cvar(DT.SHOW[what][1])
-    if v == nil then return nil end
-    return v ~= 0
+    local name = shownName(what)
+    if not name then return nil end
+    return cvar(name) ~= 0
 end
 
 -- Like every game setting Daylight UI writes, never from inside a fight.
@@ -133,7 +151,8 @@ function DT.SetShown(what, on)
 end
 
 function DT.ShownDefault(what)
-    local d = cvarDefault(DT.SHOW[what][1])
+    local name = shownName(what) or DT.SHOW[what][1]
+    local d = cvarDefault(name)
     return d ~= nil and d ~= 0
 end
 

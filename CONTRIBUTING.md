@@ -6,9 +6,10 @@ pull request etiquette, and whether your idea fits better as a plugin are in the
 
 ## Setup
 
-DaylightUI is built for WoW: Forever only (Interface 16001). It's classic content on the modern
-client, so the modern addon rules apply: secret values, Edit Mode, `C_*` APIs. Code written for
-old Classic clients usually won't work.
+DaylightUI is built for WoW Retail (Midnight, Interface 120105; the 12.1.7 PTR is 120107).
+It does not load on Classic or WoW: Forever. The modern addon rules apply: secret values,
+Edit Mode, `C_*` APIs. Code written for old Classic clients usually won't work.
+`DaylightUI.Client.Retail()` is true while the addon is running.
 
 1. Fork and clone the repo somewhere **outside** the game folder (Battle.net can't update the game
    while an editor has files open inside it).
@@ -18,8 +19,9 @@ old Classic clients usually won't work.
    powershell -ExecutionPolicy Bypass -File tools\link_dev.ps1
    ```
 
-   This makes junctions in `Interface\AddOns` for the core and every module. Pass
-   `-Game "D:\path\to\_forever_"` if the game isn't in the default place.
+   This makes junctions in `Interface\AddOns` for the core and every module. The
+   default game folder is Retail (`_retail_`). Pass `-Game "D:\path\to\_retail_"`
+   or set `WOW_RETAIL` if yours is elsewhere.
 3. `/reload` in game picks up every change, new files included.
 
 ## Tests
@@ -76,37 +78,13 @@ this client it breaks the game's own protected calls. React to events instead.
 **Text.** Every string a player sees goes through the locale table: `L["Ready"]`, whole sentences
 with `%s` for the parts that change. Use `DUI.UnitName(unit, element)` for names, not `UnitName`.
 
-**Settings.** `DUI:Get(scope, "path")` and `DUI:Set(...)`. Never read settings when a file loads;
-they don't exist until login.
+**Options.** New settings need a sensible default for every class and role. Prefer fewer options over
+more. Put them with the thing they change.
 
-**Performance.** Nothing should run every frame while idle. `tests/test_lag.lua` counts it.
+**Performance.** Nothing new should run every frame while idle. Prefer events and short timers.
 
-## Where things are
+## License
 
-- The core (`DaylightUI/`) holds the shared pieces: `Style.lua`, `Motion.lua`, `Options/`,
-  the window kit in `Windows/`, and the newer windows (`Book/`, `Character/`, `Npc/`, ...).
-- Each `DaylightUI_<Name>` folder is its own addon and can be switched off on its own.
-- `API.md` is the public API for plugin authors.
-
-## Open issue: nameplates that disappear
-
-Some players see every nameplate vanish until a reload. The cause is not known yet, so please don't
-send a fix that only guesses at it. What has been checked so far:
-
-- Fade's whole-frame buffers (`Fade.Whole`) could be left on frames that had left an area, because
-  ownership was tracked through lists that areas refill in place. That is fixed: each area now owns
-  its own request and releases only that one. It was a real bug, but nothing shows it caused the
-  vanishing plates.
-- A frame the nameplate module gives back to the game without going through `SetUnit` again now gets
-  its nameplate events back (faction, behind-camera, focus, raid target, and its unit events).
-- Step 5 of `/dui platefix` rebuild the plates and set each game plate as its own stacking box.
-  A player's plates came back at that step, but friendly plates showed up too, and before it the
-  enemy and both friendly plate switches all read off. So the result doesn't point to stacking or
-  buffers on its own.
-
-If you can make plates vanish on demand, the steps to do it are worth more than a patch.
-
-## Bug reports
-
-Open an issue with what you were doing, what you expected, and the error text if there was one
-(BugSack / BugGrabber is the easiest way to get it). Which modules you have on helps too.
+DaylightUI is source-available, not open source. See `LICENSE`. Helping with a pull request to this
+repository is fine. Building a plugin that uses `DaylightUI.API` is fine. Copying DaylightUI's code,
+art or text into another addon is not.

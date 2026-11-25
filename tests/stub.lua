@@ -1857,7 +1857,8 @@ _G.UnitName = function(u)
     if u == "player" then return stub.playerName end
 end
 stub.playerName = "Tester"
--- In this client the second value is a last name (units[u].lastName), not a realm.
+-- On Retail the second value is the realm. Tests store it as units[u].lastName;
+-- DUI.UnitName never joins it (a Total RP 3 profile can still supply a surname).
 _G.UnitFullName = function(u)
     local x = U(u)
     if x then return x.name, x.lastName end
@@ -3697,6 +3698,9 @@ stub.feelOwner = nil
 
 function stub.Reset()
     unhookAll()
+    -- Daylight UI is Retail-only. Clear any project overrides a prior test left.
+    _G.WOW_PROJECT_ID, _G.WOW_PROJECT_MAINLINE, _G.WOW_PROJECT_CAMELOT = nil, nil, nil
+    _G.GetBuildInfo = nil
     -- What a test world put in place beyond the fake game (tests/cdmworld.lua) goes with it.
     for _, undo in ipairs(stub.onReset or {}) do undo() end
     stub.onReset, stub.inGame = {}, 0
@@ -4117,7 +4121,7 @@ function stub.WrapSecrets()
     end
 end
 
-stub.CORE_FILES = { "Locales/Locales.lua", "Locales/ruRU.lua", "Locales/zhCN.lua", "Locales/koKR.lua", "Locales/frFR.lua", "Locales/esES.lua", "Locales/deDE.lua", "Core.lua", "DB.lua", "Pixel.lua", "Style.lua", "Tips.lua", "GameFonts.lua", "DamageText.lua", "Motion.lua", "Sound.lua", "Pad.lua", "Media.lua", "Health.lua", "Weapons.lua", "Threat.lua", "Interrupt.lua", "Spots.lua", "Dots.lua", "DotsDraw.lua", "PrivateAuras.lua", "Taint.lua", "BugReport.lua", "PlateReport.lua", "WorldWatch.lua", "Gradients.lua", "BarFx.lua", "BarFxStyles.lua", "Movers.lua", "Fade.lua", "FadeUpgrade.lua", "EditMode.lua", "EditModeBase.lua", "GameMovers.lua", "PTRButton.lua", "QuestieAside.lua", "PrettyAside.lua", "OpenMap.lua", "CombatText/Kinds.lua", "CombatText/Lines.lua", "CombatText/Feed.lua", "CombatText/Page.lua", "Options/Registry.lua", "Options/Theme.lua",
+stub.CORE_FILES = { "Locales/Locales.lua", "Locales/ruRU.lua", "Locales/zhCN.lua", "Locales/koKR.lua", "Locales/frFR.lua", "Locales/esES.lua", "Locales/deDE.lua", "Client.lua", "Core.lua", "DB.lua", "Pixel.lua", "Style.lua", "Tips.lua", "GameFonts.lua", "DamageText.lua", "Motion.lua", "Sound.lua", "Pad.lua", "Media.lua", "Health.lua", "Weapons.lua", "Threat.lua", "Interrupt.lua", "Spots.lua", "Dots.lua", "DotsDraw.lua", "PrivateAuras.lua", "Taint.lua", "BugReport.lua", "PlateReport.lua", "WorldWatch.lua", "Gradients.lua", "BarFx.lua", "BarFxStyles.lua", "Movers.lua", "Fade.lua", "FadeUpgrade.lua", "EditMode.lua", "EditModeBase.lua", "GameMovers.lua", "PTRButton.lua", "QuestieAside.lua", "PrettyAside.lua", "OpenMap.lua", "CombatText/Kinds.lua", "CombatText/Lines.lua", "CombatText/Feed.lua", "CombatText/Page.lua", "Options/Registry.lua", "Options/Theme.lua",
                     "Options/Widgets.lua", "Options/SampleStrip.lua", "Options/Nav.lua", "Options/Results.lua", "Options/Panel.lua", "GameMenu.lua", "Installer.lua", "InstallerDraft.lua", "InstallerPages.lua", "InstallerCards.lua", "InstallerScreen.lua", "InstallerUI.lua", "InstallerChrome.lua", "InstallerSteps.lua", "InstallerPlugins.lua", "InstallerLooks.lua", "InstallerDuel.lua", "Welcome.lua", "Profiles.lua", "Alts.lua", "Plugins.lua", "API.lua", "Donators.lua", "PatchNotes.lua", "PatchNotesUI.lua", "TestBox.lua", "Windows/Feel.lua", "Windows/Frame.lua", "Windows/Room.lua", "Windows/Follow.lua", "Windows/Swap.lua", "Windows/Parts.lua", "Windows/Keys.lua", "Windows/Cast.lua", "Tour.lua" }
 stub.BUFFS_FILES = { "Core.lua", "Categories.lua", "Data.lua", "Classify.lua", "Auras.lua", "Spells.lua", "Layout.lua",
                      "Scan.lua", "Preview.lua", "Widgets.lua", "Bar.lua", "Feel.lua", "DebuffBar.lua", "Private.lua", "PreviewBar.lua", "Reminder.lua", "EdgeEditor.lua", "Commands.lua",

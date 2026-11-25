@@ -909,44 +909,44 @@ T.test("profiles: if the talents weren't known at login, entering the world asks
     T.isnil(stub.Asked(), "once")
 end)
 
-T.test("characters: one entry each, by first and last name and realm; old keys folded in", function()
+T.test("characters: one entry each, by first name and realm; a Forever-shaped key is folded in", function()
     talents(1, 1)
     local DUI = stub.Load({ module = true, before = function()
         fakeEncoding()
         _G.GetRealmName = function() return "Classic Beta PvE 2" end
-        stub.units.player = { name = "Kaladin", lastName = "Stormblessed", isPlayer = true, class = "WARRIOR" }
+        stub.units.player = { name = "Kaladin", lastName = "Stormrage", isPlayer = true, class = "WARRIOR" }
         DaylightUIDB = { version = 2, profileData = { Default = {}, Healer = {} }, characters = {
-            ["Kaladin-Stormblessed"] = { profile = "Healer", install = "installed" },
+            ["Kaladin Stormblessed-Classic Beta PvE 2"] = { profile = "Healer", install = "installed" },
             ["Unknown-Classic Beta PvE 2"] = { lastSpec = 1 },
         } }
     end })
     local chars = DaylightUIDB.characters
-    T.eq(DUI.DB.CharKey(), "Kaladin Stormblessed-Classic Beta PvE 2")
-    T.eq(chars["Kaladin Stormblessed-Classic Beta PvE 2"].profile, "Healer", "the old entry's choice kept")
-    T.isnil(chars["Kaladin-Stormblessed"], "and the old entry gone")
+    T.eq(DUI.DB.CharKey(), "Kaladin-Classic Beta PvE 2")
+    T.eq(chars["Kaladin-Classic Beta PvE 2"].profile, "Healer", "the Forever-shaped entry's choice kept")
+    T.isnil(chars["Kaladin Stormblessed-Classic Beta PvE 2"], "and that entry gone")
     T.isnil(chars["Unknown-Classic Beta PvE 2"], "no entries for no one")
     T.eq(DUI.DB.ActiveName(), "Healer", "on the profile it chose")
-    T.eq(DUI.DB.Character("Kaladin-Classic Beta PvE 2"), DUI.DB.Character(), "a first-name key (DaylightMogul's) still finds you")
+    T.eq(DUI.DB.Character("Kaladin-Classic Beta PvE 2"), DUI.DB.Character(), "the ShortKey finds you")
     _G.GetRealmName = nil
 end)
 
--- Seen in game: a whole session where GetRealmName returned "". The character was
--- saved as "Muscle Crowe-", got a fresh entry and lost its Cooldown Manager pick.
-T.test("characters: an empty realm name from the game keeps the character on its own entry", function()
+-- Seen in game: a whole session where GetRealmName returned "". UnitFullName's
+-- second value is the realm on Retail, so the character stays on its own entry.
+T.test("characters: an empty realm name from the game uses UnitFullName's realm", function()
     talents(1, 1)
     local DUI = stub.Load({ module = true, before = function()
         fakeEncoding()
         _G.GetRealmName = function() return "" end
-        stub.units.player = { name = "Muscle", lastName = "Crowe", isPlayer = true, class = "WARRIOR" }
+        stub.units.player = { name = "Muscle", lastName = "Realm 7 PvE", isPlayer = true, class = "WARRIOR" }
         DaylightUIDB = { version = 2, profileData = { Default = {}, Healer = {} }, characters = {
-            ["Muscle Crowe-Realm 7 PvE"] = { profile = "Healer", install = "installed", cdm = { use = { "p1" } } },
+            ["Muscle-Realm 7 PvE"] = { profile = "Healer", install = "installed", cdm = { use = { "p1" } } },
             ["Other Person-Realm 2"] = { profile = "Default" },
         } }
     end })
     local chars = DaylightUIDB.characters
-    T.eq(DUI.DB.CharKey(), "Muscle Crowe-Realm 7 PvE", "the realm it was saved under")
+    T.eq(DUI.DB.CharKey(), "Muscle-Realm 7 PvE", "the realm from UnitFullName")
     T.eq(DUI.DB.Character().cdm.use[1], "p1", "its layout pick kept")
-    T.isnil(chars["Muscle Crowe-"], "no entry without a realm")
+    T.isnil(chars["Muscle-"], "no entry without a realm")
     T.eq(DUI.DB.ActiveName(), "Healer")
     _G.GetRealmName = nil
 end)
@@ -956,20 +956,20 @@ T.test("characters: an entry saved without a realm is folded back into the real 
     local DUI = stub.Load({ module = true, before = function()
         fakeEncoding()
         _G.GetRealmName = function() return "Realm 7 PvE" end
-        stub.units.player = { name = "Muscle", lastName = "Crowe", isPlayer = true, class = "WARRIOR" }
+        stub.units.player = { name = "Muscle", lastName = "Stormrage", isPlayer = true, class = "WARRIOR" }
         DaylightUIDB = { version = 2, profileData = { Default = {}, Healer = {} }, characters = {
-            ["Muscle Crowe-Realm 7 PvE"] = { profile = "Healer", install = "installed", cdm = { use = { "p1" } } },
-            ["Muscle Crowe-"] = { profile = "Default", install = "installed", cdm = { use = { "p2" } },
+            ["Muscle-Realm 7 PvE"] = { profile = "Healer", install = "installed", cdm = { use = { "p1" } } },
+            ["Muscle-"] = { profile = "Default", install = "installed", cdm = { use = { "p2" } },
                 questRecent = { [1150] = 1 } },
         } }
     end })
     local chars = DaylightUIDB.characters
-    local mine = chars["Muscle Crowe-Realm 7 PvE"]
-    T.eq(DUI.DB.CharKey(), "Muscle Crowe-Realm 7 PvE")
+    local mine = chars["Muscle-Realm 7 PvE"]
+    T.eq(DUI.DB.CharKey(), "Muscle-Realm 7 PvE")
     T.eq(mine.cdm.use[1], "p1", "the real entry's pick wins")
     T.eq(mine.profile, "Healer")
     T.eq(mine.questRecent and mine.questRecent[1150], 1, "what only the stray had comes along")
-    T.isnil(chars["Muscle Crowe-"], "and the stray is gone")
+    T.isnil(chars["Muscle-"], "and the stray is gone")
     _G.GetRealmName = nil
 end)
 
@@ -980,18 +980,19 @@ T.test("characters: an empty realm name keeps the profile when the name is saved
             fakeEncoding()
             _G.GetRealmName = function() return "" end
             _G.GetNormalizedRealmName = normal and function() return normal end or nil
-            stub.units.player = { name = "Muscle", lastName = "Crowe", isPlayer = true, class = class }
+            -- No UnitFullName realm: fall back to a saved entry for this name.
+            stub.units.player = { name = "Muscle", isPlayer = true, class = class }
             DaylightUIDB = { version = 2, profileData = { Default = {}, Healer = {}, Tank = {} }, characters = {
-                ["Muscle Crowe-Realm 7 PvE"] = { profile = "Healer", inventory = { class = seven } },
-                ["Muscle Crowe-Realm 8 PvP"] = { profile = "Tank", class = eight },
+                ["Muscle-Realm 7 PvE"] = { profile = "Healer", inventory = { class = seven } },
+                ["Muscle-Realm 8 PvP"] = { profile = "Tank", class = eight },
             } }
         end })
     end
     local DUI = load("Realm8PvP", "PRIEST", "PRIEST", "PRIEST")
-    T.eq(DUI.DB.CharKey(), "Muscle Crowe-Realm 8 PvP", "the game's normalized realm picks first")
+    T.eq(DUI.DB.CharKey(), "Muscle-Realm 8 PvP", "the game's normalized realm picks first")
     T.eq(DUI.DB.ActiveName(), "Tank")
     DUI = load(nil, "PRIEST", "PRIEST", "WARRIOR")
-    T.eq(DUI.DB.CharKey(), "Muscle Crowe-Realm 7 PvE", "else the class picks")
+    T.eq(DUI.DB.CharKey(), "Muscle-Realm 7 PvE", "else the class picks")
     T.eq(DUI.DB.ActiveName(), "Healer")
     _G.GetRealmName, _G.GetNormalizedRealmName = nil, nil
 end)
@@ -1001,13 +1002,13 @@ T.test("characters: an empty realm name never takes over another class's entry o
     local DUI = stub.Load({ module = true, before = function()
         fakeEncoding()
         _G.GetRealmName = function() return "" end
-        stub.units.player = { name = "Muscle", lastName = "Crowe", isPlayer = true, class = "MAGE" }
+        stub.units.player = { name = "Muscle", isPlayer = true, class = "MAGE" }
         DaylightUIDB = { version = 2, profileData = { Default = {}, Tank = {} }, characters = {
-            ["Muscle Crowe-Realm 8 PvP"] = { profile = "Tank", class = "WARRIOR" },
+            ["Muscle-Realm 8 PvP"] = { profile = "Tank", class = "WARRIOR" },
         } }
     end })
-    T.eq(DUI.DB.CharKey(), "Muscle Crowe-", "a new character, not the warrior")
-    T.eq(DaylightUIDB.characters["Muscle Crowe-Realm 8 PvP"].profile, "Tank", "the warrior's entry untouched")
+    T.eq(DUI.DB.CharKey(), "Muscle-", "a new character, not the warrior")
+    T.eq(DaylightUIDB.characters["Muscle-Realm 8 PvP"].profile, "Tank", "the warrior's entry untouched")
     _G.GetRealmName = nil
 end)
 
@@ -1016,13 +1017,13 @@ T.test("characters: the profile picked while the realm was missing doesn't repla
     local DUI = stub.Load({ module = true, before = function()
         fakeEncoding()
         _G.GetRealmName = function() return "Realm 7 PvE" end
-        stub.units.player = { name = "Muscle", lastName = "Crowe", isPlayer = true, class = "WARRIOR" }
+        stub.units.player = { name = "Muscle", lastName = "Stormrage", isPlayer = true, class = "WARRIOR" }
         DaylightUIDB = { version = 2, profileData = { ["DPS/Tank"] = { general = { scale = 0.8 } }, Fresh = {} }, characters = {
-            ["Muscle Crowe-Realm 7 PvE"] = { install = "installed" },
-            ["Muscle Crowe-"] = { profile = "Fresh", specProfiles = { "Fresh" }, install = "installed" },
+            ["Muscle-Realm 7 PvE"] = { install = "installed" },
+            ["Muscle-"] = { profile = "Fresh", specProfiles = { "Fresh" }, install = "installed" },
         } }
     end })
-    local mine = DaylightUIDB.characters["Muscle Crowe-Realm 7 PvE"]
+    local mine = DaylightUIDB.characters["Muscle-Realm 7 PvE"]
     T.isnil(mine.profile, "still on the standard profile")
     T.isnil(mine.specProfiles)
     T.eq(DUI.DB.ActiveName(), DUI.DB.DEFAULT)
@@ -1034,70 +1035,64 @@ T.test("characters: a realm read under a new name still finds the character by i
     local DUI = stub.Load({ module = true, before = function()
         fakeEncoding()
         _G.GetRealmName = function() return "Realm 7 PvE" end
-        stub.units.player = { name = "Muscle", lastName = "Crowe", isPlayer = true, class = "WARRIOR", guid = "Player-6933-0093C938" }
+        stub.units.player = { name = "Muscle", lastName = "Stormrage", isPlayer = true, class = "WARRIOR", guid = "Player-6933-0093C938" }
         DaylightUIDB = { version = 2, profileData = { Default = {}, Healer = {} }, characters = {} }
     end })
-    T.eq(DaylightUIDB.characters["Muscle Crowe-Realm 7 PvE"].guid, "Player-6933-0093C938", "saved at login")
+    T.eq(DaylightUIDB.characters["Muscle-Realm 7 PvE"].guid, "Player-6933-0093C938", "saved at login")
     local saved = DaylightUIDB
-    saved.characters["Muscle Crowe-Realm 7 PvE"].profile = "Healer"
-    saved.characters["Muscle Crowe-Realm 7 PvE"].install = "installed"
-    saved.characters["Muscle Crowe-Realm 7 PvE"].cdm = { use = { "p1" } }
+    saved.characters["Muscle-Realm 7 PvE"].profile = "Healer"
+    saved.characters["Muscle-Realm 7 PvE"].install = "installed"
+    saved.characters["Muscle-Realm 7 PvE"].cdm = { use = { "p1" } }
     DUI = stub.Load({ module = true, before = function()
         fakeEncoding()
         _G.GetRealmName = function() return "Thunderhorn" end
-        stub.units.player = { name = "Muscle", lastName = "Crowe", isPlayer = true, class = "WARRIOR", guid = "Player-6933-0093C938" }
+        stub.units.player = { name = "Muscle", lastName = "Stormrage", isPlayer = true, class = "WARRIOR", guid = "Player-6933-0093C938" }
         DaylightUIDB = saved
     end })
     local chars = DaylightUIDB.characters
-    local mine = chars["Muscle Crowe-Thunderhorn"]
-    T.eq(DUI.DB.CharKey(), "Muscle Crowe-Thunderhorn")
+    local mine = chars["Muscle-Thunderhorn"]
+    T.eq(DUI.DB.CharKey(), "Muscle-Thunderhorn")
     T.eq(mine.profile, "Healer", "its profile")
     T.eq(mine.cdm.use[1], "p1", "its layout pick")
-    T.isnil(chars["Muscle Crowe-Realm 7 PvE"], "one entry, under the new name")
+    T.isnil(chars["Muscle-Realm 7 PvE"], "one entry, under the new name")
     T.eq(DUI.DB.ActiveName(), "Healer", "on its profile from the first login")
     _G.GetRealmName = nil
 end)
 
--- Two characters with the same first name (Boopy Dadoopy, Boopy Mcdoopy) used to
--- share one "Boopy-Realm" entry: each saw the other's bags and bank.
-T.test("characters: two with the same first name each keep their own bags; settings carry to both", function()
+-- Two characters on different realms each keep their own bags.
+T.test("characters: two with the same first name on different realms each keep their own bags", function()
     talents(1, 1)
-    local function as(last, class)
+    local function as(realm, class, guid)
         local saved = DaylightUIDB
         local DUI = stub.Load({ module = true, before = function()
             fakeEncoding()
-            _G.GetRealmName = function() return "Forever" end
-            stub.units.player = { name = "Boopy", lastName = last, isPlayer = true, class = class, guid = "Player-1-" .. last }
+            _G.GetRealmName = function() return realm end
+            stub.units.player = { name = "Boopy", lastName = realm, isPlayer = true, class = class, guid = guid }
             DaylightUIDB = saved
         end })
         stub.RunTimers()
         return DUI
     end
     DaylightUIDB = { version = 2, profileData = { Default = {}, Healer = {} }, characters = {
-        ["Boopy-Forever"] = { profile = "Healer", install = "installed", money = 500, class = "PRIEST",
-            mailName = "Boopy Mcdoopy", inventory = { class = "PRIEST", money = 500, bags = {} } },
+        ["Boopy-Stormrage"] = { profile = "Healer", install = "installed", money = 500, class = "PRIEST",
+            mailName = "Boopy", inventory = { class = "PRIEST", money = 500, bags = {} } },
     } }
-    local DUI = as("Dadoopy", "MAGE")
+    local DUI = as("Area 52", "MAGE", "Player-1-Area52")
     local chars = DaylightUIDB.characters
-    local mine = chars["Boopy Dadoopy-Forever"]
-    T.eq(DUI.DB.CharKey(), "Boopy Dadoopy-Forever")
-    T.eq(mine.profile, "Healer", "the shared setup carries over")
-    T.eq(mine.install, "installed", "no setup guide again")
-    T.isnil(mine.inventory, "Mcdoopy's bags aren't taken")
-    T.eq(chars["Boopy-Forever"].inventory.class, "PRIEST", "they stay for Mcdoopy")
-    DUI.DB.Character().money = 100   -- as the gold text saves it
+    local mine = chars["Boopy-Area 52"]
+    T.eq(DUI.DB.CharKey(), "Boopy-Area 52")
+    T.eq(DUI.DB.ActiveName(), DUI.DB.DEFAULT, "a new realm starts on the standard profile")
+    T.isnil(mine.inventory, "Stormrage's bags aren't taken")
+    T.eq(chars["Boopy-Stormrage"].inventory.class, "PRIEST", "they stay for the other realm")
+    DUI.DB.Character().money = 100
     stub.FireEvent("PLAYER_LOGOUT")
 
-    DUI = as("Mcdoopy", "PRIEST")
-    local his = chars["Boopy Mcdoopy-Forever"]
-    T.eq(his.inventory and his.inventory.class, "PRIEST", "Mcdoopy takes his own bags")
+    DUI = as("Stormrage", "PRIEST", "Player-1-Stormrage")
+    local his = chars["Boopy-Stormrage"]
+    T.eq(his.inventory and his.inventory.class, "PRIEST", "Stormrage keeps its bags")
     T.eq(his.money, 500, "and gold")
     T.eq(his.profile, "Healer")
-    T.isnil(chars["Boopy-Forever"].inventory, "nothing of his left on the old entry")
-    T.isnil(chars["Boopy-Forever"].money, "so the gold isn't counted twice")
-    local names = {}
-    for _, c in ipairs(DUI.Alts.List()) do names[#names + 1] = c.name end
-    T.deq(names, { "Boopy Dadoopy" }, "each listed by full name, no stray Boopy")
+    T.eq(chars["Boopy-Area 52"].money, 100, "Area 52 kept its own gold")
     _G.GetRealmName = nil
 end)
 
@@ -1105,39 +1100,39 @@ end)
 -- other random places". Removing one takes it out of every list at once.
 T.test("characters: removing one takes it off every list until it logs in again", function()
     talents(1, 1)
-    local function as(first, last)
+    local function as(first, realm)
         local saved = DaylightUIDB
         local DUI = stub.Load({ module = true, before = function()
             fakeEncoding()
-            _G.GetRealmName = function() return "Forever" end
-            stub.units.player = { name = first, lastName = last, isPlayer = true, class = "MAGE", guid = "Player-1-" .. first }
+            _G.GetRealmName = function() return realm end
+            stub.units.player = { name = first, lastName = realm, isPlayer = true, class = "MAGE", guid = "Player-1-" .. first }
             DaylightUIDB = saved
         end })
         stub.RunTimers()
         return DUI
     end
     DaylightUIDB = { version = 2, profileData = { Default = {}, Healer = {} }, characters = {
-        ["Bolb Gone-Forever"] = { profile = "Healer", install = "installed", money = 0, class = "PRIEST",
-            mailName = "Bolb Gone", inventory = { class = "PRIEST", money = 0, bags = {} } },
-        ["Kept Alt-Forever"] = { profile = "Healer", money = 50, class = "MAGE", mailRecent = { "Bolb Gone", "Someone Else" } },
+        ["Bolb-Forever"] = { profile = "Healer", install = "installed", money = 0, class = "PRIEST",
+            mailName = "Bolb", inventory = { class = "PRIEST", money = 0, bags = {} } },
+        ["Kept-Forever"] = { profile = "Healer", money = 50, class = "MAGE", mailRecent = { "Bolb", "Someone Else" } },
     } }
-    local DUI = as("Main", "Char")
-    T.deq(DUI.Profiles.UsersOf("Healer"), { "Bolb Gone-Forever", "Kept Alt-Forever" })
-    T.truthy(DUI.Alts.Forget("Bolb Gone-Forever"))
+    local DUI = as("Main", "Forever")
+    T.deq(DUI.Profiles.UsersOf("Healer"), { "Bolb-Forever", "Kept-Forever" })
+    T.truthy(DUI.Alts.Forget("Bolb-Forever"))
     local chars = DaylightUIDB.characters
-    local gone = chars["Bolb Gone-Forever"]
+    local gone = chars["Bolb-Forever"]
     T.isnil(gone.money, "off the gold list")
     T.isnil(gone.inventory, "off the bag chest and item counts")
     T.isnil(gone.mailName, "off the mail window's own names")
-    T.deq(chars["Kept Alt-Forever"].mailRecent, { "Someone Else" }, "and off the recent mail names")
-    T.deq(DUI.Profiles.UsersOf("Healer"), { "Kept Alt-Forever" }, "the profiles page no longer counts it")
-    for _, c in ipairs(DUI.Alts.List()) do T.truthy(c.name ~= "Bolb Gone", "nor in Remove a character") end
+    T.deq(chars["Kept-Forever"].mailRecent, { "Someone Else" }, "and off the recent mail names")
+    T.deq(DUI.Profiles.UsersOf("Healer"), { "Kept-Forever" }, "the profiles page no longer counts it")
+    for _, c in ipairs(DUI.Alts.List()) do T.truthy(c.name ~= "Bolb", "nor in Remove a character") end
     T.eq(gone.profile, "Healer", "its profile pick stays, in case it still exists")
     T.eq(gone.install, "installed", "and its setup")
     stub.FireEvent("PLAYER_LOGOUT")
 
-    DUI = as("Bolb", "Gone")
-    T.isnil(chars["Bolb Gone-Forever"].forgotten, "logging in on it brings it back")
+    DUI = as("Bolb", "Forever")
+    T.isnil(chars["Bolb-Forever"].forgotten, "logging in on it brings it back")
     T.eq(DUI.DB.ActiveName(), "Healer", "on its own profile")
     _G.GetRealmName = nil
 end)

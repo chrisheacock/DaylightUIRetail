@@ -361,6 +361,15 @@ local look = {
           desc = "Their color when Active border and glow color is One color.",
           hidden = custom("look.checkedBorderMode") },
     } }),
+    -- Spell-alert procs (Hot Streak, Sudden Death, …) light the button border.
+    perLook({ label = "Proc", items = {
+        { type = "dropdown", key = "look.proc", label = "Proc border",
+          values = { accent = "Accent color", custom = "One color" }, order = { "accent", "custom" },
+          desc = "The button's border while a spell procs." },
+        { type = "color", key = "look.procColor", label = "Proc border color",
+          hidden = custom("look.proc"),
+          desc = "The proc border's color when Proc border is set to Your own color." },
+    } }),
     perLook({ label = "Range and cooldown", items = {
         { type = "dropdown", key = "look.range", label = "Out of range", values = { fade = "Fade the icon", color = "Tint the icon" },
           order = { "fade", "color" }, desc = "What a button does while your target is out of range. Not enough mana, rage or energy does the same (blue when tinted)." },

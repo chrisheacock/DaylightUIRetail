@@ -2320,33 +2320,36 @@ local function framePage(id, label, desc, opts)
         tagRows[#tagRows + 1] = { type = "toggle", key = k("threatTagSlant"), label = "Threat tag angled end",
             desc = "The tag's end is angled like the frame. When off, both ends are straight.", disabled = tagOff }
     end
+    -- Pet happiness is a classic-era system. Retail Midnight has no
+    -- C_PetInfo.GetPetHappiness, so the rows stay hidden on that client.
     if opts.happiness then
-        local function happyOff(get) return shown(get) or get(k("happiness")) ~= true end
+        local function noHappy() return not (ns.Happiness and ns.Happiness.Supported and ns.Happiness.Supported()) end
+        local function happyOff(get) return shown(get) or noHappy() or get(k("happiness")) ~= true end
         extras[#extras + 1] = { type = "toggle", key = k("happiness"), label = "Pet happiness (hunters)",
             desc = "Your pet's mood beside the frame: red while it's unhappy, yellow while content, green while happy. Hover for its damage, loyalty and diet.",
-            disabled = shown }
+            disabled = shown, hidden = noHappy }
         extras[#extras + 1] = { type = "dropdown", key = k("happinessLook"), label = "Happiness look",
             values = { square = "Color square", icon = "Mood face", frame = "In the frame" },
             order = { "square", "icon", "frame" },
             desc = "A square filled with the mood's color, the pet's mood face, or a stripe inside the frame.",
-            disabled = happyOff }
+            disabled = happyOff, hidden = noHappy }
         local function besideOff(get) return happyOff(get) or get(k("happinessLook")) == "frame" end
         local function stripeOff(get) return happyOff(get) or get(k("happinessLook")) ~= "frame" end
         extras[#extras + 1] = { type = "dropdown", key = k("happinessSide"), label = "Happiness side", since = "1.8.0",
             values = { left = "Left", right = "Right" }, order = { "left", "right" },
             desc = "Which end of the frame the stripe sits in. On an angled end it follows the angle.",
-            disabled = stripeOff }
+            disabled = stripeOff, hidden = noHappy }
         extras[#extras + 1] = { type = "dropdown", key = k("happinessSpot"), label = "Happiness position", values = ns.Spots.LABELS,
-            order = ns.Spots.ORDER, desc = "Where the happiness square or face sits, on or around the frame.", disabled = besideOff }
+            order = ns.Spots.ORDER, desc = "Where the happiness square or face sits, on or around the frame.", disabled = besideOff, hidden = noHappy }
         extras[#extras + 1] = { type = "slider", key = k("happinessSize"), label = "Happiness size", min = 8, max = 40, step = 1, unit = "px",
-            desc = "How big the happiness square or face is.", disabled = besideOff }
+            desc = "How big the happiness square or face is.", disabled = besideOff, hidden = noHappy }
         extras[#extras + 1] = { type = "slider", key = k("happinessX"), label = "Happiness left / right", min = -50, max = 50, step = 1, unit = "px",
-            desc = "Nudges the happiness square or face sideways.", disabled = besideOff }
+            desc = "Nudges the happiness square or face sideways.", disabled = besideOff, hidden = noHappy }
         extras[#extras + 1] = { type = "slider", key = k("happinessY"), label = "Happiness up / down", min = -50, max = 50, step = 1, unit = "px",
-            desc = "Nudges the happiness square or face up or down.", disabled = besideOff }
+            desc = "Nudges the happiness square or face up or down.", disabled = besideOff, hidden = noHappy }
         extras[#extras + 1] = { type = "toggle", key = k("happinessBar"), label = "Color health bar by happiness",
             desc = "The pet's health bar takes the mood color instead: red unhappy, yellow content, green happy. Turn Pet happiness off to have only this.",
-            disabled = shown }
+            disabled = shown, hidden = noHappy }
     end
     if opts.role then
         iconRow({ type = "toggle", key = k("showRole"), label = "Role icon",

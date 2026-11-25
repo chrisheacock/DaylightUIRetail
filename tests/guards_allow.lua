@@ -225,7 +225,7 @@ return {
         ["DaylightUI_Skins/Packs/Addons/ForeverDungeonJournal.lua"] = 1,
         ["DaylightUI_Skins/Packs/Addons/NeedRoll.lua"] = 2,
         ["DaylightUI_Skins/Packs/Social.lua"] = 6,
-        ["DaylightUI_Skins/Packs/Spells.lua"] = 1,
+        ["DaylightUI_Skins/Packs/Spells.lua"] = 0,
         ["DaylightUI_Skins/Packs/System.lua"] = 9,
         ["DaylightUI_Tooltip/Tooltip.lua"] = 19,
         ["DaylightUI_UnitFrames/AuraLists.lua"] = 1,

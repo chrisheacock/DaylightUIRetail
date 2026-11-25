@@ -1122,14 +1122,16 @@ T.test("installer: how close a profile is to a ready-made setup, whatever its se
     T.eq(I.RoleShape("Plain"), "DPS/Tank")
 end)
 
-T.test("installer: the greeting uses the first and last name", function()
+T.test("installer: the greeting uses the player's first name, never the realm", function()
     local DUI = login()
     local I = DUI.Installer
     local real = _G.UnitFullName
-    _G.UnitFullName = function() return "Bone", "Money" end
-    T.truthy(I.GreetingText():find("Bone Money", 1, true), "first and last name")
+    _G.UnitFullName = function() return "Bone", "Stormrage" end
+    local text = I.GreetingText()
+    T.truthy(text:find("Bone", 1, true), "the first name")
+    T.falsy(text:find("Stormrage", 1, true), "the realm stays out")
     _G.UnitFullName = function() return "Bone", "" end
-    T.falsy(I.GreetingText():find("Bone ", 1, true), "no last name, no trailing space")
+    T.falsy(I.GreetingText():find("Bone ", 1, true), "no trailing space")
     _G.UnitFullName = real
 end)
 

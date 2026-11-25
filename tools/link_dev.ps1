@@ -8,17 +8,17 @@
 #
 #     powershell -ExecutionPolicy Bypass -File tools\link_dev.ps1
 #
-# The game folder: -Game, else $env:WOW_FOREVER, else the usual install.
+# The game folder: -Game, else $env:WOW_RETAIL, else Retail's usual install.
 # Safe to run again: a right junction is left alone, a stale one is remade.
 # The junctions are outside the repo, so git never sees them.
 
-param([string]$Game = $(if ($env:WOW_FOREVER) { $env:WOW_FOREVER } else { "C:\Program Files (x86)\World of Warcraft\_forever_" }))
+param([string]$Game = $(if ($env:WOW_RETAIL) { $env:WOW_RETAIL } else { "C:\Program Files (x86)\World of Warcraft\_retail_" }))
 
 $ErrorActionPreference = "Stop"
 $repo = Split-Path -Parent $PSScriptRoot
 $addons = Join-Path $Game "Interface\AddOns"
 if (-not (Test-Path -LiteralPath $addons)) {
-    Write-Error "No AddOns folder at $addons. Pass the game folder: -Game 'D:\World of Warcraft\_forever_'"
+    Write-Error "No AddOns folder at $addons. Pass the game folder: -Game 'D:\World of Warcraft\_retail_'"
     exit 1
 }
 

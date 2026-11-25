@@ -482,6 +482,8 @@ T.test("cdm profiles: account-wide, shown to their class only, one picked per ta
     T.eq(DUI.DB.Character().cdm.on, false)
     -- Another Warrior sees them and picks its own. A Mage sees none.
     stub.units.player.name = "Other"
+    stub.units.player.guid = "Player-1-OTHER"
+    DUI.DB.fullKey, DUI.DB.fullKeyOf = nil, nil
     T.isnil(D.Use(1), "another character picks its own")
     T.eq(#D.Profiles(), 2, "the class's profiles are there")
     D.Assign(1, a)
@@ -492,6 +494,8 @@ T.test("cdm profiles: account-wide, shown to their class only, one picked per ta
     T.isnil(D.Use(1), "a pick of another class's profile counts as none")
     stub.units.player.name = "Tester"
     stub.units.player.class = "WARRIOR"
+    stub.units.player.guid = "Player-1-0000TEST"
+    DUI.DB.fullKey, DUI.DB.fullKeyOf = nil, nil
     T.eq(D.Use(1), a)
 end)
 
@@ -629,7 +633,7 @@ T.test("cdm profiles: two characters that shared an entry each see the shared la
     D.Get(1)
     T.eq(D.Use(1), id)
     T.eq(#D.Profiles("PRIEST"), 1); T.eq(#D.Profiles("WARRIOR"), 1)
-    T.truthy(DaylightUIDB.characters["Boopy Mcdoopy-R"], "each keyed by first and last name")
+    T.truthy(DaylightUIDB.characters["Boopy-R"], "each keyed by first name and realm")
     _G.GetRealmName = nil
 end)
 

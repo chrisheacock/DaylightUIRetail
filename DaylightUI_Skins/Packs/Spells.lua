@@ -16,15 +16,8 @@ local function professionPanel(Kit, panel)
     for _, r in ipairs({ panel:GetRegions() }) do
         if Kit.Kind(r) == "FontString" then Kit.Font(r) end
     end
-    -- The skill bar's expansion picker (retail's Classic/Outland/... lines).
-    -- Forever has one line per profession, so it's just a stray box at the
-    -- end of the bar. Faded out and made click-through.
-    local bar = panel.StatusBar
-    local pick = type(bar) == "table" and bar.ExpansionDropdownButton
-    if type(pick) == "table" then
-        Kit.Hide(pick)
-        if pick.EnableMouse then pick:EnableMouse(false) end
-    end
+    -- The skill bar's expansion picker (Classic/Outland/... skill lines).
+    -- Left alone: Retail uses it to switch expansions.
 end
 
 local function professionPanels(Kit, frame, depth)
@@ -97,230 +90,138 @@ end
 DaylightUI.RegisterEvent("TRADE_SKILL_SHOW", professionsAgain)
 DaylightUI.RegisterEvent("SKILL_LINES_CHANGED", professionsAgain)
 
--- The hunter's stable. Forever uses the Camelot one (Blizzard_StableUI/Camelot):
--- `PetStableFrame` (retail's `StableFrame` doesn't exist here). The gold rules,
--- the coin box and the frame around the pet sit on their own pieces, above the
--- window strip. Slot frames are atlases the game shows and hides by state, so
--- they're erased to stay gone. The lock and the empty slot's paw stay.
-local STABLE_SLOTS = { "PetStableCurrentPet", "PetStableStabledPet1", "PetStableStabledPet2" }
-local STABLE_ART = { "currentBackground", "unlockedBackground", "lockedBackground", "currentGlow" }
-local STABLE_MONEY = { "PetStableMoneyFrame", "PetStableCostMoneyFrame" }
-local askHold = setmetatable({}, { __mode = "k" })
-local stableWatched = false
-local STABLE_W = 448 -- a little under the 480 pass; the game's panel is 384
-local STABLE_H = 570 -- the game's frame is 522; the extra is the gap under the pet
-local STABLE_MODEL_Y = -84 -- under the name and the two lines
-local STABLE_MODEL_BOTTOM = 182 -- was 150; keeps the pet's own height and opens the gap
+-- The hunter's stable on Retail (Blizzard_StableUI): StableFrame with a pet
+-- model, an active-pet footer, and a scrollable stabled list. Atlas chrome is
+-- stripped; buttons and text take the Daylight look. Nothing hooks the game's
+-- methods: EventRegistry and OnShow say when to repaint list rows.
+local stableRowHooked = setmetatable({}, { __mode = "k" })
 
--- The number is the part worth a glance. One flat accent color, not the
--- gradient sweep: a two-digit level would show each digit in another shade.
-local function accent(value)
-    return DaylightUI.Win.Parts.Hex({ DaylightUI.Style.Accent() }) .. tostring(value) .. "|r"
+local function stableActiveButton(Kit, btn)
+    if type(btn) ~= "table" then return end
+    Kit.Hide(btn.Background)
+    Kit.Hide(btn.Border)
+    Kit.Hide(btn.Highlight)
+    Kit.Item(btn)
+    if btn.Lock then Kit.Light(btn.Lock, DaylightUI.Style.INK.LABEL) end
 end
 
-local function join(a, b)
-    a, b = a or "", b or ""
-    if a == "" then return b end
-    if b == "" then return a end
-    return a .. DaylightUI.Win.Parts.Hex(DaylightUI.Style.INK.LABEL) .. " | |r" .. b
-end
-
-local function sizeStable(f)
-    if type(f) ~= "table" or not f.SetSize then return end
-    if InCombatLockdown() then
-        DaylightUI.AfterCombat(function() sizeStable(f) end, "skins:stable:size")
-        return
-    end
-    -- Its panel layout keeps the game's own size: an attribute written here
-    -- would carry this addon's taint into the game's next ShowUIPanel.
-    f:SetSize(STABLE_W, STABLE_H)
-end
-
-local function placeSlots(f)
-    local scene = type(f) == "table" and f.modelScene
-    local current = _G.PetStableCurrentPet
-    local first = _G.PetStableStabledPet1
-    local second = _G.PetStableStabledPet2
-    if type(scene) ~= "table" or type(current) ~= "table" or not current.ClearAllPoints then return end
-    -- The game clusters the three slots under the middle. Current pet on the
-    -- left edge, the stabled pair on the right, across the footer.
-    current:ClearAllPoints()
-    current:SetPoint("TOPLEFT", scene, "BOTTOMLEFT", 28, -34)
-    if type(second) == "table" and second.ClearAllPoints then
-        second:ClearAllPoints()
-        second:SetPoint("TOPRIGHT", scene, "BOTTOMRIGHT", -28, -34)
-    end
-    if type(first) == "table" and type(second) == "table" and first.ClearAllPoints then
-        first:ClearAllPoints()
-        first:SetPoint("RIGHT", second, "LEFT", -12, 0)
+local function stableListRow(Kit, row)
+    if type(row) ~= "table" then return end
+    Kit.Hide(row.Background)
+    Kit.Hide(row.Selected)
+    Kit.Hide(row.Highlight)
+    Kit.Row(row, "art", row.Selected, false)
+    local portrait = row.Portrait
+    if type(portrait) == "table" then Kit.Hide(portrait.Border) end
+    Kit.Font(row.Name, DaylightUI.Style.SIZE.body)
+    Kit.Light(row.Name, DaylightUI.Style.INK.TITLE)
+    Kit.Font(row.Type, DaylightUI.Style.SIZE.small)
+    Kit.Light(row.Type, DaylightUI.Style.INK.TEXT)
+    if not stableRowHooked[row] and row.HookScript then
+        stableRowHooked[row] = true
+        row:HookScript("OnMouseUp", Kit.RepaintSoon)
     end
 end
 
--- Name on its own line, then level | family, then loyalty name | loyalty rank.
--- The game writes one run-on line; this replaces it each time a pet is picked.
-local function paintPet(frame, index)
-    local api = _G.C_StableInfo
-    if type(api) ~= "table" or type(api.GetStablePetInfo) ~= "function" then return end
-    -- Nothing is picked yet when the window first opens, and the call wants a
-    -- real index.
-    local id = index or (type(frame) == "table" and frame.selectedPet)
-    if type(id) ~= "number" then return end
-    local ok, pet = pcall(api.GetStablePetInfo, id)
-    if not ok or type(pet) ~= "table" or type(pet.name) ~= "string" then return end
-    local name, detail = _G.PetStableLevelText, _G.PetStableLoyaltyText
-    if type(name) ~= "table" or type(detail) ~= "table" then return end
-    local Kit = ns.Kit
+local function stableListRows(Kit, list)
+    if type(list) ~= "table" then return end
+    local box = list.ScrollBox
+    if type(box) == "table" and box.ForEachFrame then
+        Kit.EachRow(box, function(row) stableListRow(Kit, row) end, "stable")
+    end
+end
+
+local function paintStable(Kit, f)
     local ink = DaylightUI.Style.INK
-    Kit.Font(name, DaylightUI.Style.SIZE.head)
-    name:SetText(pet.name)
-    Kit.Light(name, ink.TITLE)
-    if name.SetJustifyH then name:SetJustifyH("CENTER") end
-    local level = ""
-    if type(pet.level) == "number" and type(_G.UNIT_LEVEL_TEMPLATE) == "string" then
-        level = string.format(_G.UNIT_LEVEL_TEMPLATE, pet.level)
-        level = (level:gsub(tostring(pet.level), function() return accent(pet.level) end, 1))
+    Kit.Hide(f.Topper)
+    Kit.Button(f.StableTogglePetButton)
+    Kit.Button(f.ReleasePetButton)
+    local scene = f.PetModelScene
+    if type(scene) == "table" then
+        Kit.Hide(scene.Background)
+        Kit.Hide(scene.PetShadow)
+        Kit.Strip(scene.Inset)
+        Kit.Hide(scene.PetModelSceneShadow)
+        local controls = scene.ControlFrame
+        if type(controls) == "table" then
+            for _, key in ipairs({ "zoomInButton", "zoomOutButton", "rotateLeftButton", "rotateRightButton", "resetButton" }) do
+                Kit.IconButton(controls[key])
+            end
+        end
+        local info = scene.PetInfo
+        if type(info) == "table" then
+            Kit.Font(info.Type, DaylightUI.Style.SIZE.body)
+            Kit.Light(info.Type, ink.TEXT)
+            Kit.Font(info.Exotic, DaylightUI.Style.SIZE.body)
+            Kit.Light(info.Exotic, ink.LABEL)
+            local box = info.NameBox
+            if type(box) == "table" then
+                Kit.Font(box.Name, DaylightUI.Style.SIZE.head)
+                Kit.Light(box.Name, ink.TITLE)
+                Kit.IconButton(box.EditButton)
+            end
+        end
+        local abilities = scene.AbilitiesList
+        if type(abilities) == "table" then
+            Kit.Font(abilities.ListHeader, DaylightUI.Style.SIZE.small)
+            Kit.Light(abilities.ListHeader, ink.LABEL)
+        end
     end
-    local family = type(pet.familyName) == "string" and pet.familyName or ""
-    -- A pet named after its family (a Wolf called "Wolf") says it once, as the game does.
-    if family == pet.name then family = "" end
-    local loyal = type(pet.loyaltyName) == "string" and pet.loyaltyName or ""
-    -- The game's loyalty name already carries the rank ("(Loyalty level 6) Best
-    -- Friend"), so the number is colored where it is. Only a name without it
-    -- gets the rank appended.
-    local rank = ""
-    if pet.loyaltyLevel ~= nil then
-        local num = tostring(pet.loyaltyLevel)
-        local found
-        loyal, found = loyal:gsub(num, function() return accent(num) end, 1)
-        if found == 0 then rank = accent(num) end
+    local active = f.ActivePetList
+    if type(active) == "table" then
+        Kit.Hide(active.ActivePetListBG)
+        Kit.Hide(active.ActivePetListBGBar)
+        Kit.Font(active.ListName, DaylightUI.Style.SIZE.body)
+        Kit.Light(active.ListName, ink.LABEL)
+        for _, btn in ipairs(active.PetButtons or {}) do stableActiveButton(Kit, btn) end
+        stableActiveButton(Kit, active.BeastMasterSecondaryPetButton)
+        if type(active.Divider) == "table" then Kit.Hide(active.Divider.Bar) end
     end
-    local row = join(level, family)
-    local rest = join(loyal, rank)
-    if rest ~= "" then row = row .. "\n" .. rest end
-    Kit.Font(detail, DaylightUI.Style.SIZE.small)
-    detail:SetText(row)
-    Kit.Light(detail, ink.TEXT)
-    if detail.SetJustifyH then detail:SetJustifyH("CENTER") end
+    local list = f.StabledPetList
+    if type(list) == "table" then
+        Kit.Hide(list.Backgroud)
+        Kit.Strip(list.Inset)
+        Kit.Font(list.ListName, DaylightUI.Style.SIZE.title)
+        Kit.Light(list.ListName, ink.TITLE)
+        if type(list.ListCounter) == "table" then
+            Kit.Strip(list.ListCounter)
+            Kit.Font(list.ListCounter.Count, DaylightUI.Style.SIZE.small)
+            Kit.Light(list.ListCounter.Count, ink.TEXT)
+        end
+        local filter = list.FilterBar
+        if type(filter) == "table" then
+            Kit.Hide(filter.Background)
+            Kit.EditBox(filter.SearchBox)
+        end
+        Kit.ScrollBar(list.ScrollBar)
+        stableListRows(Kit, list)
+    end
 end
 
--- The pet's lines and the slots' places are redone a frame after anything that
--- changes them, once however many arrive together, never inside the game's own
--- call. Nothing hooks the game's methods: its callbacks, events and the frame's
--- and slots' own scripts say when.
-local stableQueued = false
-local function refreshStable()
-    if stableQueued then return end
-    stableQueued = true
-    C_Timer.After(0, function()
-        stableQueued = false
-        local f = _G.PetStableFrame
-        if type(f) ~= "table" or not (f.IsShown and f:IsShown()) then return end
-        DaylightUI.SafeCall(paintPet, f)
-        DaylightUI.SafeCall(placeSlots, f)
-    end)
-end
-
+local stableWatched = false
 local function watchStable(f)
     if stableWatched then return end
     stableWatched = true
-    f:HookScript("OnShow", refreshStable)
-    -- A click on a pet slot picks it. The slots are ours to script, the frame's
-    -- method that writes the lines is not.
-    for _, name in ipairs(STABLE_SLOTS) do
-        local slot = _G[name]
-        if type(slot) == "table" and slot.HookScript then slot:HookScript("OnClick", refreshStable) end
+    local function soon()
+        local Kit = ns.Kit
+        if type(f) ~= "table" or not (f.IsShown and f:IsShown()) then return end
+        DaylightUI.SafeCall(stableListRows, Kit, f.StabledPetList)
+        Kit.RepaintSoon()
     end
+    f:HookScript("OnShow", soon)
     local R = _G.EventRegistry
     if type(R) == "table" and R.RegisterCallback then
-        for _, e in ipairs({ "StableFrameMixin.PetSelected", "StableFrameMixin.OnSelectedPetChanged" }) do
-            DaylightUI.SafeCall(R.RegisterCallback, R, e, refreshStable, "DaylightUI.stable")
+        for _, e in ipairs({ "StableFrameMixin.PetSelected", "StableFrameMixin.PetSwapRequested" }) do
+            DaylightUI.SafeCall(R.RegisterCallback, R, e, soon, "DaylightUI.stable")
         end
     end
-    for _, e in ipairs({ "PET_STABLE_UPDATE", "PLAYER_MONEY" }) do
-        DaylightUI.RegisterEvent(e, refreshStable)
+    for _, e in ipairs({ "PET_STABLE_UPDATE", "PET_STABLE_SHOW" }) do
+        DaylightUI.RegisterEvent(e, soon)
     end
-    DaylightUI.RegisterUnitEvent("UNIT_PET", refreshStable, "player")
 end
 
-Engine.Window({ key = "stable", pack = "npc", addon = "Blizzard_StableUI", frame = "PetStableFrame", watch = true,
+Engine.Window({ key = "stable", pack = "npc", addon = "Blizzard_StableUI", frame = "StableFrame", watch = true,
     after = function(Kit, f)
-        local ink = DaylightUI.Style.INK
-        local Win = DaylightUI.Win
-        -- Portrait frames hang the X off the corner, so it sits in the header like
-        -- our own windows'. The title's spot is Kit.Window's, as for every window.
-        local close = f.CloseButton
-        if type(close) == "table" and close.SetPoint then
-            close:SetSize(DaylightUI.Widgets.CLOSE, DaylightUI.Widgets.CLOSE)
-            close:ClearAllPoints()
-            close:SetPoint("TOPRIGHT", f, "TOPRIGHT", Win.CLOSE_X, Win.CloseY(false))
-        end
-        for _, name in ipairs(STABLE_SLOTS) do
-            local slot = _G[name]
-            if type(slot) == "table" then
-                for _, key in ipairs(STABLE_ART) do Kit.Erase(slot[key]) end
-                if slot.GetCheckedTexture then Kit.Hide(slot:GetCheckedTexture()) end
-                Kit.Item(slot)
-                Kit.Font(slot.Text, DaylightUI.Style.SIZE.small)
-                Kit.Light(slot.Text, ink.LABEL)
-            end
-        end
-        -- Rules across the pet, drawn on frames above the window.
-        Kit.Hide(f.TopDividerFrame)
-        Kit.Hide(f.BottomDividerFrame)
-        Kit.Hide(f.insideFrameBottom)
-        local scene = f.modelScene
-        if type(scene) == "table" then
-            Kit.Strip(scene.Inset)
-            if scene.ClearAllPoints then
-                scene:ClearAllPoints()
-                scene:SetPoint("TOPLEFT", f, "TOPLEFT", 6, STABLE_MODEL_Y)
-                scene:SetPoint("BOTTOMRIGHT", f, "BOTTOMRIGHT", -6, STABLE_MODEL_BOTTOM)
-            end
-        end
-        for _, name in ipairs(STABLE_MONEY) do
-            local mf = _G[name]
-            if type(mf) == "table" then Kit.Hide(mf.Border) end
-        end
-        Kit.Button(f.purchaseButton)
-        local bar = f.expBar
-        if type(bar) == "table" then
-            Kit.ProgressBar(bar)
-            Kit.Hide(bar.overlay)
-            Kit.Light(bar.Text, ink.TEXT)
-        end
-        -- The game's panel layout reads the size from the frame's panel
-        -- attributes, so they're set through the game's own call (out of
-        -- combat), never by writing into UIPanelWindows.
-        sizeStable(f)
-        -- The pet's name is set again each time you pick one.
-        Kit.Font(_G.PetStableLevelText, DaylightUI.Style.SIZE.head)
-        Kit.Light(_G.PetStableLevelText, ink.TITLE)
-        Kit.Light(_G.PetStableCostLabel, ink.LABEL)
-        paintPet(f)
-        placeSlots(f)
+        paintStable(Kit, f)
         watchStable(f)
-        -- The buy-a-slot line sits lower in the gap, in the same ink as the slot labels.
-        local ask = _G.PetStableSlotText
-        local above = _G.PetStableCurrentPet
-        local below = f.purchaseButton
-        if type(ask) == "table" and type(above) == "table" and type(below) == "table" then
-            local hold = askHold[f]
-            if not hold then
-                hold = CreateFrame("Frame", nil, f)
-                hold:EnableMouse(false)
-                askHold[f] = hold
-            end
-            hold:ClearAllPoints()
-            hold:SetPoint("TOP", above, "BOTTOM", 0, -28)
-            hold:SetPoint("BOTTOM", below, "TOP", 0, 4)
-            hold:SetPoint("LEFT", f, "LEFT", 16, 0)
-            hold:SetPoint("RIGHT", f, "RIGHT", -16, 0)
-            ask:ClearAllPoints()
-            ask:SetAllPoints(hold)
-            if ask.SetWordWrap then ask:SetWordWrap(false) end
-            if ask.SetJustifyH then ask:SetJustifyH("CENTER") end
-            if ask.SetJustifyV then ask:SetJustifyV("MIDDLE") end
-            Kit.Font(ask, DaylightUI.Style.SIZE.body)
-            Kit.Light(ask, ink.LABEL)
-        end
     end })

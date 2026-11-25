@@ -246,7 +246,16 @@ function TD.Read(configID, opts)
             end
         end
     end
-    local o = { step = opts.step or TD.STEP, span = opts.span or TD.SPAN, cols = opts.cols or 4, rows = opts.rows or 7 }
+    -- Classic display groups (the three trees of a Forever-shaped class config
+    -- the Book still models) sit on a 600-unit 4x7 grid. Retail class, spec and
+    -- hero trees have no display groups: the step is measured and the board grows.
+    local classic = false
+    for _, t in ipairs(out.trees) do
+        if t.groupID then classic = true break end
+    end
+    local o = { step = opts.step or (classic and TD.STEP or "auto"),
+        span = opts.span or (classic and TD.SPAN or 24),
+        cols = opts.cols or (classic and 4 or 1), rows = opts.rows or (classic and 7 or 1) }
     if o.step == "auto" then
         local xs, ys = {}, {}
         for _, node in pairs(out.byID) do xs[#xs + 1] = node.x; ys[#ys + 1] = node.y end

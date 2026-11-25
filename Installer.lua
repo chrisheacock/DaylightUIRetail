@@ -145,18 +145,11 @@ function Installer.Greeting(hour)
     return L["Good evening, %s"]
 end
 
--- "Good evening, First Last" with the name in class color (or in color, an
--- { r, g, b }). The last name is left off when the client doesn't provide
--- one (or hides it).
+-- "Good evening, Name" with the name in class color (or in color, an
+-- { r, g, b }). Uses DUI.UnitName so a realm is never joined, and a Total RP 3
+-- profile can still supply a roleplay name when last names are on.
 function Installer.GreetingText(color)
-    local name = UnitName("player") or ""
-    if type(UnitFullName) == "function" then
-        local first, last = UnitFullName("player")
-        local secret = DUI.IsSecret(first) or DUI.IsSecret(last)
-        if not secret and type(first) == "string" and type(last) == "string" and last ~= "" then
-            name = first .. " " .. last
-        end
-    end
+    local name = DUI.UnitName("player", "player") or UnitName("player") or ""
     local _, token = UnitClass("player")
     local r, g, b = DUI.Style.RawClassColor(token)
     if color then r, g, b = color[1], color[2], color[3] end
