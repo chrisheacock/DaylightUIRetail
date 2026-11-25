@@ -94,6 +94,14 @@ T.test("pet happiness: options stay hidden without the classic happiness API", f
     T.truthy(seen, "the row is still in the page so a classic API can show it")
 end)
 
+T.test("pet happiness: no widget and no UNIT_HAPPINESS without the classic API", function()
+    local _, ns = stub.Load({ module = true })
+    T.falsy(ns.Happiness.Supported())
+    T.isnil(ns.happiness, "the pet frame never creates one")
+    T.isnil(ns.Happiness.Create(CreateFrame("Button")), "Create refuses without the API")
+    T.eq(#stub.errors, 0, "no RegisterEvent of an unknown name")
+end)
+
 T.test("stable: Retail's StableFrame is the skinned window", function()
     stub.Load({ skins = true })
     local found

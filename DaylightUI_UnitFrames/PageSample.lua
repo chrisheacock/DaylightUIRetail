@@ -546,7 +546,7 @@ local function newSingle(id, parent)
     -- the preview, so Design mode's hotspot gets the click, not a tooltip.
     if id == "pet" then
         f.happiness = ns.Happiness.Create(f)
-        f.happiness:EnableMouse(false)
+        if f.happiness then f.happiness:EnableMouse(false) end
     end
     -- The target's and player's auras use stand-ins, since the client's
     -- containers only ever show a real unit's auras.

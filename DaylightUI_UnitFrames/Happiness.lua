@@ -234,6 +234,9 @@ local function showTooltip(self)
 end
 
 function Happiness.Create(pet)
+    -- Retail has no pet happiness and no UNIT_HAPPINESS event. Creating the
+    -- widget would RegisterEvent an unknown name and error at login.
+    if not Happiness.Supported() then return nil end
     local h = CreateFrame("Frame", nil, pet)
     h.pet = pet
     ensureBand(h)
@@ -247,8 +250,8 @@ function Happiness.Create(pet)
     -- UNIT_PET fires for every owner the client knows about, party members
     -- included, so only yours counts. UNIT_HAPPINESS stays unfiltered because
     -- the game's source doesn't show which unit token it uses on this client.
-    DUI.SafeCall(h.RegisterEvent, h, "UNIT_HAPPINESS")
-    DUI.SafeCall(h.RegisterUnitEvent, h, "UNIT_PET", "player")
+    h:RegisterEvent("UNIT_HAPPINESS")
+    h:RegisterUnitEvent("UNIT_PET", "player")
     h:SetScript("OnEvent", function(self) Happiness.Update(self) end)
     return h
 end
